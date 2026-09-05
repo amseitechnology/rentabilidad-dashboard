@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amsei Technology — Panel de rentabilidad</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%231a1712'/%3E%3Ctext x='50' y='68' font-size='58' font-family='Georgia' text-anchor='middle' fill='%23e6ab3f'%3EA%3C/text%3E%3C/svg%3E">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --stone-950:#131110;
+    --stone-900:#1a1712;
+    --stone-850:#201c16;
+    --stone-800:#26221a;
+    --stone-700:#332d22;
+    --glass:rgba(255,255,255,.045);
+    --glass-strong:rgba(255,255,255,.075);
+    --glass-border:rgba(255,255,255,.09);
+    --glass-border-strong:rgba(255,255,255,.16);
+    --amber:#e6ab3f;
+    --amber-soft:rgba(230,171,63,.14);
+    --text-1:#f4efe6;
+    --text-2:#ada08a;
+    --text-3:#756a58;
+    --green:#8fb98a;
+    --red:#c2867a;
+    --shadow-glass: 0 1px 1px rgba(0,0,0,.2), 0 8px 24px -8px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  :root[data-theme="light"]{
+    --stone-950:#ece7de; --stone-900:#f2ede4; --stone-850:#f6f1e8; --stone-800:#faf6ee; --stone-700:#e4ddcf;
+    --glass:rgba(255,255,255,.55); --glass-strong:rgba(255,255,255,.75);
+    --glass-border:rgba(60,50,30,.10); --glass-border-strong:rgba(60,50,30,.18);
+    --text-1:#221d15; --text-2:#5c5140; --text-3:#8c806c;
+    --shadow-glass: 0 1px 1px rgba(0,0,0,.03), 0 8px 24px -8px rgba(60,50,20,.18), inset 0 1px 0 rgba(255,255,255,.6);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1100px 620px at 12% -8%, rgba(230,171,63,.10), transparent 60%),
+      radial-gradient(900px 700px at 108% 8%, rgba(230,171,63,.05), transparent 55%),
+      linear-gradient(160deg,var(--stone-950),var(--stone-900) 45%,var(--stone-850) 100%);
+    color:var(--text-1);
+    font-family:'Inter',ui-sans-serif,system-ui,sans-serif;
+    font-variant-numeric: tabular-nums;
+    min-height:100vh;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:34px 28px 60px;}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;gap:16px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:13px;}
+  .mark{
+    width:42px;height:42px;border-radius:13px;display:grid;place-items:center;
+    background:linear-gradient(155deg, rgba(230,171,63,.30), rgba(230,171,63,.05));
+    border:1px solid var(--glass-border-strong);
+    box-shadow:var(--shadow-glass);
+    font-family:'Manrope';font-weight:800;font-size:18px;color:var(--amber);
+  }
+  .brand-text h1{font-family:'Manrope';font-weight:800;font-size:16.5px;margin:0;letter-spacing:.2px;}
+  .brand-text span{display:block;font-size:12px;color:var(--text-2);margin-top:1px;}
+  .top-controls{display:flex;align-items:center;gap:10px;}
+  .pill{
+    display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:100px;
+    background:var(--glass);border:1px solid var(--glass-border);backdrop-filter:blur(18px);
+    font-size:12.5px;color:var(--text-2);white-space:nowrap;
+  }
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 3px var(--amber-soft);animation:pulse 2.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+  .theme-toggle{
+    width:32px;height:32px;border-radius:50%;display:grid;place-items:center;cursor:pointer;
+    background:var(--glass);border:1px solid var(--glass-border);color:var(--text-2);font-size:14px;
+  }
+
+  .card{
+    position:relative;border-radius:22px;
+    background:linear-gradient(155deg, var(--glass-strong), var(--glass));
+    border:1px solid var(--glass-border);
+    box-shadow:var(--shadow-glass);
+    backdrop-filter:blur(22px) saturate(140%);
+    -webkit-backdrop-filter:blur(22px) saturate(140%);
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;
+    background:linear-gradient(155deg, rgba(255,255,255,.22), rgba(255,255,255,0) 40%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude; pointer-events:none;
+  }
+
+  .hero{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px;}
+  .hero .card{padding:22px 24px;}
+  .hero-label{font-size:12.5px;color:var(--text-2);}
+  .hero-value{font-family:'Manrope';font-weight:800;font-size:32px;margin-top:10px;letter-spacing:-.5px;}
+  .hero-value.accent{color:var(--amber);}
+  .hero-delta{font-size:12px;margin-top:8px;color:var(--text-2);display:flex;align-items:center;gap:5px;}
+  .hero-sub{font-size:12px;color:var(--text-3);margin-top:8px;display:flex;gap:14px;}
+  .hero-sub b{color:var(--text-1);font-weight:600;font-family:'Inter';}
+
+  .chart-card{padding:22px 26px 18px;margin-bottom:16px;}
+  .chart-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+  .chart-title{font-family:'Manrope';font-weight:700;font-size:15px;}
+  .chart-title span{display:block;font-family:'Inter';font-weight:400;font-size:12px;color:var(--text-2);margin-top:2px;}
+  .chart-legend{font-size:12px;color:var(--text-2);display:flex;align-items:center;gap:6px;}
+  .chart-legend i{width:9px;height:9px;border-radius:2px;background:var(--amber);display:inline-block;}
+  svg{width:100%;height:auto;display:block;overflow:visible;}
+  .month-labels{display:flex;justify-content:space-between;padding:0 2px;margin-top:2px;font-size:11px;color:var(--text-3);}
+  .chart-tip{position:absolute;pointer-events:none;background:var(--stone-900);border:1px solid var(--glass-border-strong);
+    border-radius:10px;padding:6px 10px;font-size:11.5px;color:var(--text-1);box-shadow:var(--shadow-glass);
+    transform:translate(-50%,-115%);white-space:nowrap;opacity:0;transition:opacity .12s;}
+  .chart-wrap{position:relative;}
+
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
+  .tile{padding:16px 18px;}
+  .tile-label{font-size:11.5px;color:var(--text-2);}
+  .tile-value{font-family:'Manrope';font-weight:700;font-size:19px;margin-top:7px;}
+  .tile-value.amber{color:var(--amber);}
+
+  .cols-2{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;margin-bottom:16px;}
+  .panel{padding:20px 22px;}
+  .panel h3{font-family:'Manrope';font-weight:700;font-size:14.5px;margin:0 0 4px;}
+  .panel h3 span{display:block;font-family:'Inter';font-weight:400;font-size:11.5px;color:var(--text-2);margin-top:2px;}
+  .rank-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--glass-border);}
+  .rank-row:first-child{border-top:none;margin-top:8px;}
+  .rank-num{font-family:'Manrope';font-weight:700;font-size:12px;color:var(--text-3);width:16px;flex-shrink:0;}
+  .rank-name{flex:1;min-width:0;}
+  .rank-name b{display:block;font-size:13px;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-track{height:5px;border-radius:4px;background:rgba(255,255,255,.06);margin-top:6px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg, var(--amber), rgba(230,171,63,.55));}
+  .rank-figs{text-align:right;flex-shrink:0;}
+  .rank-figs .v{font-size:13px;font-weight:600;font-family:'Manrope';}
+  .rank-figs .m{font-size:11px;color:var(--text-2);margin-top:2px;}
+
+  .cierres{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .cierre-card{padding:18px 20px;}
+  .cierre-tag{display:inline-flex;font-size:10.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;
+    color:var(--amber);background:var(--amber-soft);padding:3px 9px;border-radius:100px;}
+  .cierre-title{font-size:13px;color:var(--text-2);margin-top:10px;}
+  .cierre-value{font-family:'Manrope';font-weight:800;font-size:22px;margin-top:4px;}
+  .cierre-margin{font-size:12px;color:var(--green);margin-top:6px;}
+
+  footer{text-align:center;margin-top:30px;color:var(--text-3);font-size:11.5px;line-height:1.7;}
+  footer b{color:var(--text-2);}
+  footer a{color:var(--text-2);}
+
+  .skeleton{opacity:.35;filter:blur(2px);transition:opacity .3s, filter .3s;}
+  .err-banner{display:none;background:rgba(194,134,122,.14);border:1px solid rgba(194,134,122,.3);color:var(--red);
+    padding:10px 16px;border-radius:12px;font-size:12.5px;margin-bottom:16px;}
+
+  @media (max-width:880px){
+    .hero{grid-template-columns:1fr;}
+    .grid-4{grid-template-columns:repeat(2,1fr);}
+    .cols-2{grid-template-columns:1fr;}
+    .cierres{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark">A</div>
+      <div class="brand-text">
+        <h1>Amsei Technology</h1>
+        <span>Panel de rentabilidad</span>
+      </div>
+    </div>
+    <div class="top-controls">
+      <div class="pill" id="rangePill">📅&nbsp; cargando…</div>
+      <div class="pill"><span class="dot"></span> <span id="updatedPill">actualizando…</span></div>
+      <div class="theme-toggle" onclick="toggleTheme()" id="themeBtn">☾</div>
+    </div>
+  </div>
+
+  <div class="err-banner" id="errBanner">No se pudo cargar la información en vivo. Mostrando el último dato disponible.</div>
+
+  <!-- HERO -->
+  <div class="hero" id="heroGrid">
+    <div class="card">
+      <div class="hero-label">Facturación del período</div>
+      <div class="hero-value skeleton" id="kFacturado">$—</div>
+      <div class="hero-delta" id="kOrdenesTxt">— órdenes en el período</div>
+      <div class="hero-sub"><span>Ticket prom. <b id="kTicket">$—</b></span></div>
+    </div>
+    <div class="card">
+      <div class="hero-label">Ganancia neta real</div>
+      <div class="hero-value accent skeleton" id="kGananciaTotal">$—</div>
+      <div class="hero-delta">Margen neto <b style="color:var(--text-1)" id="kMargenNeto">—%</b></div>
+      <div class="hero-sub"><span>Margen bruto <b id="kMargenBruto">—%</b></span></div>
+    </div>
+    <div class="card">
+      <div class="hero-label">Órdenes y unidades</div>
+      <div class="hero-value skeleton" id="kOrdenes">—</div>
+      <div class="hero-delta" style="color:var(--text-2)">órdenes despachadas</div>
+      <div class="hero-sub"><span>Unidades <b id="kUnidades">—</b></span></div>
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <div class="card chart-card">
+    <div class="chart-head">
+      <div class="chart-title">Facturación mensual<span id="chartSub">Enero — Septiembre 2026</span></div>
+      <div class="chart-legend"><i></i> Facturado</div>
+    </div>
+    <div class="chart-wrap">
+      <svg id="chartSvg" viewBox="0 0 800 210" preserveAspectRatio="none"></svg>
+      <div class="chart-tip" id="chartTip"></div>
+    </div>
+    <div class="month-labels" id="monthLabels"></div>
+  </div>
+
+  <!-- SECONDARY METRICS -->
+  <div class="grid-4">
+    <div class="card tile"><div class="tile-label">Ganancia bruta</div><div class="tile-value skeleton" id="kGananciaBruta">$—</div></div>
+    <div class="card tile"><div class="tile-label">Ganancia 2 (− gastos)</div><div class="tile-value skeleton" id="kGanancia2">$—</div></div>
+    <div class="card tile"><div class="tile-label">Ganancia Total (− comisión)</div><div class="tile-value amber skeleton" id="kGananciaTotal2">$—</div></div>
+    <div class="card tile"><div class="tile-label">Ticket promedio</div><div class="tile-value skeleton" id="kTicket2">$—</div></div>
+    <div class="card tile"><div class="tile-label">Gastos</div><div class="tile-value skeleton" id="kGastos">$—</div></div>
+    <div class="card tile"><div class="tile-label">Envío</div><div class="tile-value skeleton" id="kEnvio">$—</div></div>
+    <div class="card tile"><div class="tile-label">Comisiones</div><div class="tile-value skeleton" id="kComisiones">$—</div></div>
+    <div class="card tile"><div class="tile-label">Unidades vendidas</div><div class="tile-value skeleton" id="kUnidades2">—</div></div>
+  </div>
+
+  <!-- TOP MODELS / CLIENTS -->
+  <div class="cols-2">
+    <div class="card panel">
+      <h3>Modelos con más rotación<span>Por unidades vendidas en el período</span></h3>
+      <div id="modelosList"></div>
+    </div>
+    <div class="card panel">
+      <h3>Clientes principales<span>Por facturación acumulada</span></h3>
+      <div id="clientesList"></div>
+    </div>
+  </div>
+
+  <!-- CIERRES -->
+  <div class="cierres" id="cierresGrid"></div>
+
+  <footer>
+    <b>Amsei Technology</b> — datos en vivo desde Ventas Amsei 2026<br>
+    Última actualización: <span id="footerUpdated">—</span> · <a href="https://docs.google.com/spreadsheets/d/1ssvcLGRBDipc7Y9BpJPB5GwyI0awjsFr6MAktq-ZgV4" target="_blank" rel="noopener">ver hoja de origen</a>
+  </footer>
+
+</div>
+
+<script>
+  var API_URL = "https://script.google.com/macros/s/AKfycbxtGRyZPb-JqUgXRraJNq6t0NRchblPhkqk46i93A6vie3ISR5UJP7OUqi7qcTEkdLycg/exec";
+  var REFRESH_MS = 5 * 60 * 1000; // 5 minutos
+  var MESES = { '01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun','07':'Jul','08':'Ago','09':'Sept','10':'Oct','11':'Nov','12':'Dic' };
+  var MESES_LARGO = { '01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre' };
+
+  function toggleTheme(){
+    var root = document.documentElement;
+    var btn = document.getElementById('themeBtn');
+    var isLight = root.getAttribute('data-theme') === 'light';
+    if(isLight){ root.setAttribute('data-theme','dark'); btn.textContent='☾'; localStorage.setItem('amsei-theme','dark'); }
+    else { root.setAttribute('data-theme','light'); btn.textContent='☀'; localStorage.setItem('amsei-theme','light'); }
+  }
+  (function initTheme(){
+    var saved = null;
+    try { saved = localStorage.getItem('amsei-theme'); } catch(e){}
+    if (saved === 'light'){ document.documentElement.setAttribute('data-theme','light'); document.addEventListener('DOMContentLoaded', function(){ document.getElementById('themeBtn').textContent='☀'; }); }
+  })();
+
+  function fmtMoney(n){
+    if (n === null || n === undefined || isNaN(n)) return '$—';
+    var neg = n < 0; n = Math.abs(n);
+    var s = n.toLocaleString('es-AR', { minimumFractionDigits: n % 1 === 0 ? 0 : 1, maximumFractionDigits: 1 });
+    return (neg ? '-$' : '$') + s;
+  }
+  function fmtNum(n){
+    if (n === null || n === undefined || isNaN(n)) return '—';
+    return Math.round(n).toLocaleString('es-AR');
+  }
+  function fmtPct(n){
+    if (n === null || n === undefined || isNaN(n)) return '—%';
+    return n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+  }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  function pintarKpis(k){
+    document.getElementById('kFacturado').textContent = fmtMoney(k.facturado);
+    document.getElementById('kGananciaTotal').textContent = fmtMoney(k.ganancia_total);
+    document.getElementById('kOrdenes').textContent = fmtNum(k.ordenes);
+    document.getElementById('kUnidades').textContent = fmtNum(k.unidades);
+    document.getElementById('kOrdenesTxt').textContent = fmtNum(k.ordenes) + ' órdenes en el período';
+    document.getElementById('kMargenNeto').textContent = fmtPct(k.margen_neto_pct);
+    document.getElementById('kMargenBruto').textContent = fmtPct(k.margen_bruto_pct);
+    document.getElementById('kTicket').textContent = fmtMoney(k.ticket_promedio);
+
+    document.getElementById('kGananciaBruta').textContent = fmtMoney(k.ganancia_bruta);
+    document.getElementById('kGanancia2').textContent = fmtMoney(k.ganancia_2);
+    document.getElementById('kGananciaTotal2').textContent = fmtMoney(k.ganancia_total);
+    document.getElementById('kTicket2').textContent = fmtMoney(k.ticket_promedio);
+    document.getElementById('kGastos').textContent = fmtMoney(k.gastos);
+    document.getElementById('kEnvio').textContent = fmtMoney(k.envio);
+    document.getElementById('kComisiones').textContent = fmtMoney(k.comisiones);
+    document.getElementById('kUnidades2').textContent = fmtNum(k.unidades);
+
+    document.querySelectorAll('.skeleton').forEach(function(el){ el.classList.remove('skeleton'); });
+  }
+
+  function pintarChart(mensual){
+    if (!mensual || !mensual.length) return;
+    var W = 800, H = 210, padL = 20, padR = 780, top = 20, bottom = 200;
+    var max = Math.max.apply(null, mensual.map(function(m){ return m.venta_total_hoja; })) * 1.06;
+    if (max <= 0) max = 1;
+    var n = mensual.length;
+    var step = n > 1 ? (padR - padL) / (n - 1) : 0;
+    var pts = mensual.map(function(m, i){
+      var x = padL + step * i;
+      var y = top + (1 - m.venta_total_hoja / max) * (bottom - top);
+      return { x: x, y: y, m: m };
+    });
+
+    var linePath = 'M' + pts.map(function(p){ return p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' L');
+    var areaPath = linePath + ' L' + pts[pts.length-1].x.toFixed(1) + ',' + bottom + ' L' + pts[0].x.toFixed(1) + ',' + bottom + ' Z';
+
+    var gridLines = '';
+    for (var g = 0; g <= 4; g++){
+      var gy = top + (bottom - top) * g / 4;
+      gridLines += '<line x1="'+padL+'" y1="'+gy+'" x2="'+padR+'" y2="'+gy+'" stroke="rgba(255,255,255,.07)" stroke-width="1"/>';
+    }
+
+    var circles = pts.map(function(p, i){
+      var isLast = i === pts.length - 1;
+      if (isLast) return '<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="3.5" fill="var(--stone-900)" stroke="var(--amber)" stroke-width="2"/>';
+      return '<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="3.5" fill="#e6ab3f"/>';
+    }).join('');
+
+    var hitAreas = pts.map(function(p, i){
+      return '<rect data-i="'+i+'" x="'+(p.x-step/2).toFixed(1)+'" y="0" width="'+(step||40).toFixed(1)+'" height="'+H+'" fill="transparent" class="hit"/>';
+    }).join('');
+
+    var svg = document.getElementById('chartSvg');
+    svg.innerHTML =
+      '<defs><linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="#e6ab3f" stop-opacity="0.35"/>' +
+      '<stop offset="100%" stop-color="#e6ab3f" stop-opacity="0"/></linearGradient></defs>' +
+      '<g>' + gridLines + '</g>' +
+      '<path d="' + areaPath + '" fill="url(#areaFill)"/>' +
+      '<path d="' + linePath + '" fill="none" stroke="var(--amber)" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"/>' +
+      circles + hitAreas;
+
+    var tip = document.getElementById('chartTip');
+    svg.querySelectorAll('.hit').forEach(function(rect){
+      rect.addEventListener('mousemove', function(ev){
+        var i = +rect.getAttribute('data-i');
+        var p = pts[i];
+        var box = svg.getBoundingClientRect();
+        var scaleX = box.width / W;
+        tip.style.left = (p.x * scaleX) + 'px';
+        tip.style.top = (p.y / H * box.height) + 'px';
+        tip.style.opacity = 1;
+        var [yy, mm] = String(p.m.clave).split('-');
+        tip.textContent = (MESES_LARGO[mm] || p.m.clave) + ' ' + yy + ' — ' + fmtMoney(p.m.venta_total_hoja);
+      });
+      rect.addEventListener('mouseleave', function(){ tip.style.opacity = 0; });
+    });
+
+    var labels = document.getElementById('monthLabels');
+    labels.innerHTML = mensual.map(function(m, i){
+      var mm = String(m.clave).split('-')[1];
+      var isLast = i === mensual.length - 1;
+      return '<span>' + (MESES[mm] || m.clave) + (isLast ? '*' : '') + '</span>';
+    }).join('');
+
+    var first = mensual[0].clave.split('-'), last = mensual[mensual.length-1].clave.split('-');
+    document.getElementById('chartSub').textContent = (MESES_LARGO[first[1]]||'') + ' — ' + (MESES_LARGO[last[1]]||'') + ' ' + last[0];
+  }
+
+  function pintarRanking(containerId, items, opts){
+    var el = document.getElementById(containerId);
+    if (!items || !items.length){ el.innerHTML = '<p style="color:var(--text-3);font-size:12.5px;">Sin datos todavía.</p>'; return; }
+    var max = Math.max.apply(null, items.map(opts.valueFn));
+    el.innerHTML = items.slice(0, 4).map(function(it, i){
+      var val = opts.valueFn(it);
+      var pct = max > 0 ? Math.round((val / max) * 100) : 0;
+      return '<div class="rank-row">' +
+        '<div class="rank-num">' + String(i+1).padStart(2,'0') + '</div>' +
+        '<div class="rank-name"><b>' + esc(opts.nameFn(it)) + '</b>' +
+          '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+        '</div>' +
+        '<div class="rank-figs"><div class="v">' + esc(opts.primaryFn(it)) + '</div><div class="m">' + esc(opts.secondaryFn(it)) + '</div></div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function pintarModelos(modelos){
+    pintarRanking('modelosList', modelos, {
+      valueFn: function(m){ return m.cantidad; },
+      nameFn: function(m){ return m.modelo; },
+      primaryFn: function(m){ return fmtNum(m.cantidad) + ' u.'; },
+      secondaryFn: function(m){ return fmtMoney(m.total_venta) + ' · ' + fmtPct(m.margen_pct); }
+    });
+  }
+
+  function pintarClientes(clientes){
+    pintarRanking('clientesList', clientes, {
+      valueFn: function(c){ return c.venta_total_hoja; },
+      nameFn: function(c){ return c.cliente; },
+      primaryFn: function(c){ return fmtMoney(c.venta_total_hoja); },
+      secondaryFn: function(c){ return 'gan. ' + fmtMoney(c.ganancia_bruta_hoja); }
+    });
+  }
+
+  function pintarCierres(payload){
+    var trimestral = payload.trimestral || [];
+    var mensual = payload.mensual || [];
+    if (!trimestral.length || !mensual.length) return;
+
+    var trimActual = trimestral[trimestral.length - 1];
+    var mesActual = mensual[mensual.length - 1];
+    var mejorTrim = trimestral.slice().sort(function(a,b){ return b.venta_total_hoja - a.venta_total_hoja; })[0];
+
+    function tKey(t){ var p = String(t.clave).split('-T'); return 'T' + p[1] + ' · ' + p[0]; }
+    function mKey(m){ var p = String(m.clave).split('-'); return (MESES_LARGO[p[1]]||m.clave) + ' ' + p[0]; }
+
+    var cards = [
+      { tag: 'Trimestre en curso', title: tKey(trimActual), value: trimActual.venta_total_hoja, margen: trimActual.margen_pct },
+      { tag: 'Mes en curso', title: mKey(mesActual), value: mesActual.venta_total_hoja, margen: mesActual.margen_pct },
+      { tag: 'Mejor trimestre', title: tKey(mejorTrim), value: mejorTrim.venta_total_hoja, margen: mejorTrim.margen_pct }
+    ];
+
+    document.getElementById('cierresGrid').innerHTML = cards.map(function(c){
+      return '<div class="card cierre-card">' +
+        '<span class="cierre-tag">' + esc(c.tag) + '</span>' +
+        '<div class="cierre-title">' + esc(c.title) + '</div>' +
+        '<div class="cierre-value">' + fmtMoney(c.value) + '</div>' +
+        '<div class="cierre-margin">Margen ' + fmtPct(c.margen) + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function pintarTopbar(payload){
+    var mensual = payload.mensual || [];
+    if (mensual.length){
+      var first = mensual[0].clave.split('-'), last = mensual[mensual.length-1].clave.split('-');
+      document.getElementById('rangePill').textContent = '📅  1 ' + (MESES[first[1]]||'').toLowerCase() + ' — 5 ' + (MESES[last[1]]||'').toLowerCase() + ' ' + last[0];
+    }
+    var gen = payload.generado ? new Date(payload.generado) : new Date();
+    var hh = String(gen.getHours()).padStart(2,'0'), mm = String(gen.getMinutes()).padStart(2,'0');
+    document.getElementById('updatedPill').textContent = 'Actualizado ' + hh + ':' + mm;
+    document.getElementById('footerUpdated').textContent = gen.toLocaleString('es-AR');
+  }
+
+  function cargar(){
+    fetch(API_URL, { cache: 'no-store' })
+      .then(function(res){ if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+      .then(function(payload){
+        document.getElementById('errBanner').style.display = 'none';
+        pintarKpis(payload.kpis || {});
+        pintarChart(payload.mensual || []);
+        pintarModelos(payload.modelos || []);
+        pintarClientes(payload.clientes || []);
+        pintarCierres(payload);
+        pintarTopbar(payload);
+        try { localStorage.setItem('amsei-cache', JSON.stringify(payload)); } catch(e){}
+      })
+      .catch(function(err){
+        console.error('Error cargando API AMSEI:', err);
+        document.getElementById('errBanner').style.display = 'block';
+        try {
+          var cached = localStorage.getItem('amsei-cache');
+          if (cached){
+            var payload = JSON.parse(cached);
+            pintarKpis(payload.kpis || {});
+            pintarChart(payload.mensual || []);
+            pintarModelos(payload.modelos || []);
+            pintarClientes(payload.clientes || []);
+            pintarCierres(payload);
+            pintarTopbar(payload);
+          }
+        } catch(e){}
+      });
+  }
+
+  if (document.readyState === 'complete') { cargar(); }
+  else { window.addEventListener('load', cargar); }
+  setInterval(cargar, REFRESH_MS);
+</script>
+</body>
+</html>
