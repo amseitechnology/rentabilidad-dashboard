@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Amsei Technology — Panel de rentabilidad</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%231a1712'/%3E%3Cg fill='none' stroke='%23e6ab3f' stroke-width='7' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M20 74 L20 50 L34 26 L48 50 L34 74 L48 50 L62 26 L76 50 L62 74 L76 50'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%231a1712'/%3E%3Cg fill='none' stroke='%23e6ab3f' stroke-width='6.5' stroke-linejoin='round'%3E%3Cpath d='M26 22 L48 50 L26 78 L4 50 Z'/%3E%3Cpath d='M50 22 L72 50 L50 78 L28 50 Z'/%3E%3Cpath d='M74 22 L96 50 L74 78 L52 50 Z'/%3E%3C/g%3E%3C/svg%3E">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -55,8 +55,10 @@
     background:linear-gradient(155deg, rgba(230,171,63,.30), rgba(230,171,63,.05));
     border:1px solid var(--glass-border-strong);
     box-shadow:var(--shadow-glass);
-    font-family:'Manrope';font-weight:800;font-size:18px;color:var(--amber);
+    color:var(--amber);
   }
+  /* el svg del logo no debe heredar la regla global svg{width:100%} del grafico */
+  .mark svg{width:30px;height:30px;display:block;}
   .brand-text h1{font-family:'Manrope';font-weight:800;font-size:16.5px;margin:0;letter-spacing:.2px;}
   .brand-text span{display:block;font-size:12px;color:var(--text-2);margin-top:1px;}
   .top-controls{display:flex;align-items:center;gap:10px;}
@@ -167,6 +169,12 @@
   .skeleton{opacity:.35;filter:blur(2px);transition:opacity .3s, filter .3s;}
   .err-banner{display:none;background:rgba(194,134,122,.14);border:1px solid rgba(194,134,122,.3);color:var(--red);
     padding:10px 16px;border-radius:12px;font-size:12.5px;margin-bottom:16px;}
+  .warn-banner{
+    display:none;background:var(--amber-soft);border:1px solid rgba(230,171,63,.35);
+    padding:11px 16px;border-radius:12px;font-size:12.5px;margin-bottom:16px;color:var(--text-1);line-height:1.6;
+  }
+  .warn-banner b{color:var(--amber);}
+  .warn-banner .det{color:var(--text-2);font-size:12px;}
 
   .filterbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:20px;position:relative;}
   .chip{
@@ -211,8 +219,10 @@
   <div class="topbar">
     <div class="brand">
       <div class="mark">
-        <svg viewBox="0 0 100 100" width="24" height="24" fill="none" stroke="var(--amber)" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
-          <path d="M14 78 L14 50 L32 22 L50 50 L32 78 L50 50 L68 22 L86 50 L68 78 L86 50"/>
+        <svg viewBox="0 0 100 100" width="30" height="30" fill="none" stroke="var(--amber)" stroke-width="6.5" stroke-linejoin="round">
+          <path d="M26 22 L48 50 L26 78 L4 50 Z"/>
+          <path d="M50 22 L72 50 L50 78 L28 50 Z"/>
+          <path d="M74 22 L96 50 L74 78 L52 50 Z"/>
         </svg>
       </div>
       <div class="brand-text">
@@ -228,6 +238,7 @@
   </div>
 
   <div class="err-banner" id="errBanner">No se pudo cargar la información en vivo. Mostrando el último dato disponible.</div>
+  <div class="warn-banner" id="warnBanner"></div>
 
   <!-- FILTRO DE FECHAS -->
   <div class="filterbar" id="filterBar">
@@ -610,6 +621,26 @@
     pintarComparativo();
   });
 
+  function pintarPendientes(payload){
+    var el = document.getElementById('warnBanner');
+    var p = payload.ordenes_pendientes || [];
+    if (!p.length){ el.style.display = 'none'; return; }
+
+    var lista = p.slice(0, 4).map(function(o){
+      var d = String(o.dia_key||'').split('-');
+      var fecha = d.length === 3 ? (d[2] + ' ' + (MESES[d[1]]||'')) : '';
+      return '<b>' + esc(o.orden) + '</b> · ' + esc(o.cliente || 's/cliente') +
+             (fecha ? ' · ' + fecha : '') + ' · ' + fmtMoney(o.venta_total_hoja);
+    }).join(' &nbsp;|&nbsp; ');
+    var extra = p.length > 4 ? ' &nbsp;|&nbsp; y ' + (p.length - 4) + ' más' : '';
+
+    el.innerHTML =
+      '⚠️ ' + (p.length === 1 ? '1 orden sin factura de compra cargada' : p.length + ' órdenes sin factura de compra cargada') +
+      ' — <b>no está' + (p.length === 1 ? '' : 'n') + ' incluida' + (p.length === 1 ? '' : 's') + ' en estos números</b>, porque sin el costo la ganancia sería falsa.' +
+      '<div class="det" style="margin-top:5px;">' + lista + extra + '</div>';
+    el.style.display = 'block';
+  }
+
   function pintarTopbar(payload, rangeLabel){
     document.getElementById('rangePill').textContent = '📅  ' + rangeLabel;
     var gen = payload.generado ? new Date(payload.generado) : new Date();
@@ -799,6 +830,7 @@
   function pintarTodo(payload){
     PAYLOAD = payload;
     document.getElementById('errBanner').style.display = 'none';
+    pintarPendientes(payload);
     pintarCierres(payload);
     pintarComparativo();
     pintarConFiltro(RANGO_ACTUAL);
