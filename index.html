@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Amsei Technology — Panel de rentabilidad</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%231a1712'/%3E%3Ctext x='50' y='68' font-size='58' font-family='Georgia' text-anchor='middle' fill='%23e6ab3f'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%231a1712'/%3E%3Cg fill='none' stroke='%23e6ab3f' stroke-width='7' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M20 74 L20 50 L34 26 L48 50 L34 74 L48 50 L62 26 L76 50 L62 74 L76 50'/%3E%3C/g%3E%3C/svg%3E">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -130,6 +130,27 @@
   .rank-figs{text-align:right;flex-shrink:0;}
   .rank-figs .v{font-size:13px;font-weight:600;font-family:'Manrope';}
   .rank-figs .m{font-size:11px;color:var(--text-2);margin-top:2px;}
+  .rank-more{
+    display:block;width:100%;margin-top:10px;padding:8px;border-radius:9px;border:1px dashed var(--glass-border-strong);
+    background:transparent;color:var(--text-2);font-family:'Inter';font-size:12px;font-weight:600;cursor:pointer;
+  }
+  .rank-more:hover{color:var(--amber);border-color:rgba(230,171,63,.45);}
+
+  .comparativo-tabs{display:flex;gap:6px;margin-bottom:4px;}
+  .comparativo-tabs .subchip{
+    padding:5px 12px;border-radius:100px;font-size:11.5px;font-weight:600;cursor:pointer;
+    background:var(--glass);border:1px solid var(--glass-border);color:var(--text-2);
+  }
+  .comparativo-tabs .subchip.active{color:var(--amber);border-color:rgba(230,171,63,.45);background:var(--amber-soft);}
+  .comp-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--glass-border);}
+  .comp-row:first-child{border-top:none;margin-top:8px;}
+  .comp-row.is-now .comp-name b{color:var(--amber);}
+  .comp-name{width:96px;flex-shrink:0;font-size:12.5px;color:var(--text-2);}
+  .comp-name b{display:block;font-size:12.5px;font-weight:600;color:var(--text-1);}
+  .comp-bar-wrap{flex:1;min-width:0;}
+  .comp-figs{text-align:right;flex-shrink:0;width:108px;}
+  .comp-figs .v{font-size:13px;font-weight:600;font-family:'Manrope';}
+  .comp-figs .m{font-size:11px;color:var(--text-2);margin-top:2px;}
 
   .cierres{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
   .cierre-card{padding:18px 20px;}
@@ -189,7 +210,11 @@
 
   <div class="topbar">
     <div class="brand">
-      <div class="mark">A</div>
+      <div class="mark">
+        <svg viewBox="0 0 100 100" width="24" height="24" fill="none" stroke="var(--amber)" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M14 78 L14 50 L32 22 L50 50 L32 78 L50 50 L68 22 L86 50 L68 78 L86 50"/>
+        </svg>
+      </div>
       <div class="brand-text">
         <h1>Amsei Technology</h1>
         <span>Panel de rentabilidad</span>
@@ -207,6 +232,7 @@
   <!-- FILTRO DE FECHAS -->
   <div class="filterbar" id="filterBar">
     <div class="chip active" data-range="todo">Todo</div>
+    <div class="chip" data-range="hoy">Hoy</div>
     <div class="chip" data-range="semana">Esta semana</div>
     <div class="chip" data-range="mes">Este mes</div>
     <div class="chip" data-range="trimestre">Este trimestre</div>
@@ -278,6 +304,16 @@
       <h3>Clientes principales<span>Por facturación acumulada</span></h3>
       <div id="clientesList"></div>
     </div>
+  </div>
+
+  <!-- COMPARATIVO POR PERIODO -->
+  <div class="card panel" style="margin-bottom:16px;">
+    <h3>Comparativo por período<span>Últimas 6 semanas o últimos 6 meses, uno al lado del otro</span></h3>
+    <div class="comparativo-tabs" id="compTabs">
+      <div class="subchip active" data-comp="semanas">Semanas</div>
+      <div class="subchip" data-comp="meses">Meses</div>
+    </div>
+    <div id="comparativoList"></div>
   </div>
 
   <!-- CIERRES -->
@@ -428,21 +464,37 @@
     return (largo ? (MESES_LARGO[q[1]]||clave) : (MESES[q[1]]||clave)) + (largo ? ' ' + q[0] : '');
   }
 
+  function filaRanking_(it, i, opts, max){
+    var val = opts.valueFn(it);
+    var pct = max > 0 ? Math.round((val / max) * 100) : 0;
+    return '<div class="rank-row">' +
+      '<div class="rank-num">' + String(i+1).padStart(2,'0') + '</div>' +
+      '<div class="rank-name"><b>' + esc(opts.nameFn(it)) + '</b>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+      '</div>' +
+      '<div class="rank-figs"><div class="v">' + esc(opts.primaryFn(it)) + '</div><div class="m">' + esc(opts.secondaryFn(it)) + '</div></div>' +
+    '</div>';
+  }
+
   function pintarRanking(containerId, items, opts){
     var el = document.getElementById(containerId);
     if (!items || !items.length){ el.innerHTML = '<p style="color:var(--text-3);font-size:12.5px;">Sin datos todavía.</p>'; return; }
     var max = Math.max.apply(null, items.map(opts.valueFn));
-    el.innerHTML = items.slice(0, 4).map(function(it, i){
-      var val = opts.valueFn(it);
-      var pct = max > 0 ? Math.round((val / max) * 100) : 0;
-      return '<div class="rank-row">' +
-        '<div class="rank-num">' + String(i+1).padStart(2,'0') + '</div>' +
-        '<div class="rank-name"><b>' + esc(opts.nameFn(it)) + '</b>' +
-          '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
-        '</div>' +
-        '<div class="rank-figs"><div class="v">' + esc(opts.primaryFn(it)) + '</div><div class="m">' + esc(opts.secondaryFn(it)) + '</div></div>' +
-      '</div>';
-    }).join('');
+    var VISIBLES = 6;
+    var expandido = false;
+
+    function render(){
+      var mostrar = expandido ? items : items.slice(0, VISIBLES);
+      var html = mostrar.map(function(it, i){ return filaRanking_(it, i, opts, max); }).join('');
+      if (items.length > VISIBLES){
+        html += '<div class="rank-more" id="' + containerId + 'More">' +
+          (expandido ? 'Ver menos ▴' : 'Ver lista completa (' + items.length + ') ▾') + '</div>';
+      }
+      el.innerHTML = html;
+      var btn = document.getElementById(containerId + 'More');
+      if (btn) btn.addEventListener('click', function(){ expandido = !expandido; render(); });
+    }
+    render();
   }
 
   function pintarModelos(modelos){
@@ -491,6 +543,73 @@
     }).join('');
   }
 
+  // ---------- comparativo por semana / mes (siempre ultimos 6, independiente del filtro) ----------
+  var COMP_TAB = 'semanas';
+
+  function ultimasNSemanas_(ordenes, n){
+    var hoy = new Date();
+    var lunesActual = inicioSemana_(hoy);
+    var buckets = [];
+    for (var i = n - 1; i >= 0; i--){
+      var inicio = new Date(lunesActual); inicio.setDate(inicio.getDate() - 7*i);
+      var fin = new Date(inicio); fin.setDate(fin.getDate() + 6);
+      buckets.push({ desde: diaKey_(inicio), hasta: diaKey_(fin), esActual: i === 0 });
+    }
+    return buckets.map(function(b){
+      var enRango = ordenes.filter(function(o){ return o.dia_key >= b.desde && o.dia_key <= b.hasta; });
+      var venta = sumar_(enRango, 'venta_total_hoja');
+      var gan = sumar_(enRango, 'ganancia_total');
+      var dDesde = b.desde.split('-'), dHasta = b.hasta.split('-');
+      return {
+        etiqueta: dDesde[2] + ' ' + (MESES[dDesde[1]]||'') + ' – ' + dHasta[2] + ' ' + (MESES[dHasta[1]]||''),
+        venta_total_hoja: venta, margen_pct: venta > 0 ? (gan/venta)*100 : 0, esActual: b.esActual
+      };
+    });
+  }
+
+  function ultimosNMeses_(ordenes, n){
+    var hoy = new Date();
+    var claves = [];
+    for (var i = n - 1; i >= 0; i--){
+      var d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+      claves.push({ clave: d.getFullYear() + '-' + pad2_(d.getMonth()+1), mm: pad2_(d.getMonth()+1), yy: d.getFullYear(), esActual: i === 0 });
+    }
+    return claves.map(function(c){
+      var enRango = ordenes.filter(function(o){ return o.mes_key === c.clave; });
+      var venta = sumar_(enRango, 'venta_total_hoja');
+      var gan = sumar_(enRango, 'ganancia_total');
+      return {
+        etiqueta: (MESES[c.mm]||c.clave) + ' ' + c.yy,
+        venta_total_hoja: venta, margen_pct: venta > 0 ? (gan/venta)*100 : 0, esActual: c.esActual
+      };
+    });
+  }
+
+  function pintarComparativo(){
+    if (!PAYLOAD) return;
+    var ordenes = PAYLOAD.ordenes_raw || [];
+    var items = COMP_TAB === 'semanas' ? ultimasNSemanas_(ordenes, 6) : ultimosNMeses_(ordenes, 6);
+    var max = Math.max.apply(null, items.map(function(x){ return x.venta_total_hoja; })) || 1;
+    var el = document.getElementById('comparativoList');
+    el.innerHTML = items.map(function(it){
+      var pct = max > 0 ? Math.round((it.venta_total_hoja / max) * 100) : 0;
+      return '<div class="comp-row' + (it.esActual ? ' is-now' : '') + '">' +
+        '<div class="comp-name"><b>' + esc(it.etiqueta) + (it.esActual ? ' *' : '') + '</b></div>' +
+        '<div class="comp-bar-wrap"><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div></div>' +
+        '<div class="comp-figs"><div class="v">' + fmtMoney(it.venta_total_hoja) + '</div><div class="m">margen ' + fmtPct(it.margen_pct) + '</div></div>' +
+      '</div>';
+    }).join('');
+  }
+
+  document.getElementById('compTabs').addEventListener('click', function(ev){
+    var chip = ev.target.closest('.subchip');
+    if (!chip) return;
+    COMP_TAB = chip.getAttribute('data-comp');
+    document.querySelectorAll('#compTabs .subchip').forEach(function(c){ c.classList.remove('active'); });
+    chip.classList.add('active');
+    pintarComparativo();
+  });
+
   function pintarTopbar(payload, rangeLabel){
     document.getElementById('rangePill').textContent = '📅  ' + rangeLabel;
     var gen = payload.generado ? new Date(payload.generado) : new Date();
@@ -514,7 +633,8 @@
     var hoy = new Date();
     var fin = diaKey_(hoy);
     var inicio;
-    if (tipo === 'semana') inicio = diaKey_(inicioSemana_(hoy));
+    if (tipo === 'hoy') inicio = fin;
+    else if (tipo === 'semana') inicio = diaKey_(inicioSemana_(hoy));
     else if (tipo === 'mes') inicio = diaKey_(inicioMes_(hoy));
     else if (tipo === 'trimestre') inicio = diaKey_(inicioTrimestre_(hoy));
     else if (tipo === 'anio') inicio = diaKey_(inicioAnio_(hoy));
@@ -524,6 +644,7 @@
 
   function etiquetaRango_(tipo, desde, hasta){
     if (tipo === 'todo') return 'Todo el histórico';
+    if (tipo === 'hoy') return 'Hoy';
     if (tipo === 'semana') return 'Esta semana';
     if (tipo === 'mes') return 'Este mes';
     if (tipo === 'trimestre') return 'Este trimestre';
@@ -533,11 +654,12 @@
 
   function sumar_(arr, campo){ return arr.reduce(function(a,x){ return a + (Number(x[campo])||0); }, 0); }
 
-  function kpisDesdeOrdenes_(ordenes){
+  function kpisDesdeOrdenes_(ordenes, lineas){
     var facturado = sumar_(ordenes, 'venta_total_hoja');
     var gananciaBruta = sumar_(ordenes, 'ganancia_bruta_hoja');
     var gananciaTotal = sumar_(ordenes, 'ganancia_total');
     var ordenesCount = ordenes.length;
+    var unidades = (lineas||[]).reduce(function(a,l){ return a + (l.es_iphone ? (Number(l.cantidad)||0) : 0); }, 0);
     return {
       facturado: facturado,
       ganancia_bruta: gananciaBruta,
@@ -547,7 +669,7 @@
       envio: sumar_(ordenes, 'envio'),
       comisiones: sumar_(ordenes, 'comision_monto'),
       ordenes: ordenesCount,
-      unidades: sumar_(ordenes, 'cantidad_total_hoja'),
+      unidades: unidades,
       margen_bruto_pct: facturado > 0 ? (gananciaBruta/facturado)*100 : 0,
       margen_neto_pct: facturado > 0 ? (gananciaTotal/facturado)*100 : 0,
       ticket_promedio: ordenesCount > 0 ? facturado/ordenesCount : 0
@@ -576,6 +698,7 @@
     var mapa = {};
     lineas.forEach(function(l){
       if (l.categoria && l.categoria !== 'equipo') return;
+      if (!l.es_iphone) return;
       var m = l.modelo;
       if (!mapa[m]) mapa[m] = { modelo: m, cantidad: 0, total_venta: 0, sumaMargen: 0, n: 0 };
       mapa[m].cantidad += Number(l.cantidad)||0;
@@ -588,7 +711,7 @@
       return { modelo: r.modelo, cantidad: r.cantidad, total_venta: r.total_venta, margen_pct: r.n>0 ? r.sumaMargen/r.n : 0 };
     });
     arr.sort(function(a,b){ return b.cantidad - a.cantidad; });
-    return arr.slice(0,8);
+    return arr.slice(0,20);
   }
 
   function clientesDesdeOrdenes_(ordenes){
@@ -603,7 +726,7 @@
     });
     var arr = Object.keys(mapa).map(function(k){ return mapa[k]; });
     arr.sort(function(a,b){ return b.venta_total_hoja - a.venta_total_hoja; });
-    return arr.slice(0,8);
+    return arr.slice(0,20);
   }
 
   function pintarConFiltro(tipo, desdeCustom, hastaCustom){
@@ -631,10 +754,15 @@
     var granularity = dias <= 45 ? 'day' : 'month';
     var campoClave = granularity === 'day' ? 'dia_key' : 'mes_key';
 
-    pintarKpis(kpisDesdeOrdenes_(ordenesF));
+    pintarKpis(kpisDesdeOrdenes_(ordenesF, lineasF));
     var serie = agruparPorClave_(ordenesF, campoClave);
     if (serie.length) pintarChart(serie, granularity);
-    else document.getElementById('chartSvg').innerHTML = '';
+    else {
+      document.getElementById('chartSvg').innerHTML = '';
+      document.getElementById('monthLabels').innerHTML = '';
+      document.getElementById('chartSub').textContent = 'Sin ventas en este período';
+      document.getElementById('chartTitleMain').textContent = 'Facturación';
+    }
     pintarModelos(modelosDesdeLineas_(lineasF));
     pintarClientes(clientesDesdeOrdenes_(ordenesF));
     pintarTopbar(PAYLOAD, etiquetaRango_(tipo, rango.desde, rango.hasta));
@@ -672,6 +800,7 @@
     PAYLOAD = payload;
     document.getElementById('errBanner').style.display = 'none';
     pintarCierres(payload);
+    pintarComparativo();
     pintarConFiltro(RANGO_ACTUAL);
   }
 
