@@ -201,12 +201,21 @@ img{max-width:100%}
 .chart-svg{width:100%;height:auto;display:block;overflow:visible}
 .leyenda{font-size:13px;color:var(--lg-tenue);display:flex;align-items:center;gap:7px}
 .leyenda i{width:9px;height:9px;border-radius:3px;background:var(--lg-azul);display:inline-block}
-.ejes{display:flex;justify-content:space-between;padding:0 2px;margin-top:6px;
+.ejes{display:flex;justify-content:space-between;margin-top:2px;
   font-size:11.5px;color:var(--lg-tenue)}
+.graf-stats{display:flex;gap:26px;flex-wrap:wrap;margin:0 0 18px}
+.graf-stat .l{font-size:12px;color:var(--lg-tenue)}
+.graf-stat .v{font-size:18px;font-weight:700;letter-spacing:-.02em;margin-top:1px;
+  font-variant-numeric:tabular-nums}
+.graf-leyenda{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:var(--lg-tenue)}
+.graf-leyenda span{display:inline-flex;align-items:center;gap:7px}
+.graf-leyenda i{width:10px;height:10px;border-radius:3px;display:inline-block}
 .tip{position:absolute;pointer-events:none;background:var(--lg-tinta);color:#fff;
-  border-radius:11px;padding:7px 12px;font-size:12.5px;white-space:nowrap;
-  transform:translate(-50%,-120%);opacity:0;transition:opacity .12s;
+  border-radius:12px;padding:9px 13px;font-size:12.5px;white-space:nowrap;line-height:1.5;
+  transform:translate(-50%,-112%);opacity:0;transition:opacity .12s;z-index:5;
   box-shadow:0 10px 30px rgba(12,20,40,.25);font-variant-numeric:tabular-nums}
+.tip b{font-weight:650}
+.tip .t-tenue{color:rgba(255,255,255,.62)}
 
 /* listas tipo ranking */
 .fila{display:flex;align-items:center;gap:14px;padding:12px 0;border-top:1px solid var(--lg-borde)}
@@ -237,9 +246,12 @@ img{max-width:100%}
 .comp-fila.es-actual .comp-nom{color:var(--lg-azul)}
 .comp-nom{width:128px;flex-shrink:0;font-size:13.5px;font-weight:600}
 .comp-barra{flex:1;min-width:0}
-.comp-cifras{text-align:right;flex-shrink:0;width:124px}
+.comp-cifras{text-align:right;flex-shrink:0;width:132px}
 .comp-cifras .v{font-size:14.5px;font-weight:650;font-variant-numeric:tabular-nums}
-.comp-cifras .m{font-size:12.5px;color:var(--lg-tenue);font-variant-numeric:tabular-nums}
+.comp-cifras .g{font-size:13px;font-weight:600;color:var(--lg-azul);font-variant-numeric:tabular-nums;margin-top:1px}
+.comp-cifras .m{font-size:12px;color:var(--lg-tenue);font-variant-numeric:tabular-nums}
+
+.cierre-gan{margin-top:14px;padding-top:12px;border-top:1px solid var(--lg-borde)}
 
 /* dos paneles lado a lado */
 .dos-paneles{display:grid;grid-template-columns:1.1fr 1fr;gap:24px}
@@ -326,6 +338,7 @@ img{max-width:100%}
       <button class="chip" type="button" data-rango="hoy">Hoy</button>
       <button class="chip" type="button" data-rango="semana">Esta semana</button>
       <button class="chip" type="button" data-rango="mes">Este mes</button>
+      <button class="chip" type="button" data-rango="mespasado">Mes pasado</button>
       <button class="chip" type="button" data-rango="trimestre">Este trimestre</button>
       <button class="chip" type="button" data-rango="anio">Este año</button>
       <button class="chip" type="button" data-rango="custom" id="chipCustom">Personalizado</button>
@@ -367,13 +380,20 @@ img{max-width:100%}
             <h2 class="lg-h2" id="grafTitulo">Facturación mensual</h2>
             <p class="lg-sub" style="margin:0" id="grafSub">—</p>
           </div>
-          <span class="leyenda"><i></i> Facturado</span>
+          <div class="sub-tabs" id="subTabsMetrica">
+            <button class="sub-tab is-active" type="button" data-metrica="facturado">Facturado</button>
+            <button class="sub-tab" type="button" data-metrica="ganancia">Ganancia</button>
+            <button class="sub-tab" type="button" data-metrica="margen">Margen %</button>
+            <button class="sub-tab" type="button" data-metrica="unidades">Unidades</button>
+          </div>
         </div>
+        <div class="graf-stats" id="grafStats"></div>
         <div class="grafico-wrap">
-          <svg class="chart-svg" id="grafSvg" viewBox="0 0 800 220" preserveAspectRatio="none"></svg>
+          <svg class="chart-svg" id="grafSvg" viewBox="0 0 820 300"></svg>
           <div class="tip" id="grafTip"></div>
         </div>
         <div class="ejes" id="grafEjes"></div>
+        <div class="graf-leyenda" id="grafLeyenda"></div>
       </section>
 
       <section class="lg-panel">
@@ -406,7 +426,8 @@ img{max-width:100%}
 
       <section class="lg-panel">
         <h2 class="lg-h2">Comparativo por período</h2>
-        <p class="lg-sub">Las últimas 6 semanas o los últimos 6 meses, uno al lado del otro.</p>
+        <p class="lg-sub">Las últimas 6 semanas o los últimos 6 meses, uno al lado del otro:
+        facturación, ganancia neta y margen.</p>
         <div class="sub-tabs" id="subTabsComp">
           <button class="sub-tab is-active" type="button" data-comp="semanas">Semanas</button>
           <button class="sub-tab" type="button" data-comp="meses">Meses</button>
@@ -416,7 +437,8 @@ img{max-width:100%}
 
       <section class="lg-panel lg-panel--tinte">
         <h2 class="lg-h2">Cierres</h2>
-        <p class="lg-sub">Períodos completos, independientes del filtro de arriba.</p>
+        <p class="lg-sub">Cómo viene lo que está abierto y cómo cerró lo anterior.
+        Independiente del filtro de arriba.</p>
         <div class="lg-grid" id="gridCierres"></div>
       </section>
 
@@ -547,6 +569,12 @@ img{max-width:100%}
     if (tipo === 'hoy') ini = fin;
     else if (tipo === 'semana') ini = diaKey(inicioSemana(hoy));
     else if (tipo === 'mes') ini = diaKey(inicioMes(hoy));
+    else if (tipo === 'mespasado'){
+      // mes cerrado completo: del 1 al ultimo dia del mes anterior
+      var iniMP = new Date(hoy.getFullYear(), hoy.getMonth()-1, 1);
+      var finMP = new Date(hoy.getFullYear(), hoy.getMonth(), 0);
+      return {desde: diaKey(iniMP), hasta: diaKey(finMP)};
+    }
     else if (tipo === 'trimestre') ini = diaKey(inicioTrimestre(hoy));
     else if (tipo === 'anio') ini = diaKey(inicioAnio(hoy));
     else if (tipo === 'custom') return RANGO_CUSTOM;
@@ -558,6 +586,10 @@ img{max-width:100%}
     if (tipo === 'hoy') return 'Hoy';
     if (tipo === 'semana') return 'Esta semana';
     if (tipo === 'mes') return 'Este mes';
+    if (tipo === 'mespasado'){
+      var mp = new Date(); mp = new Date(mp.getFullYear(), mp.getMonth()-1, 1);
+      return (MESES_L[pad2(mp.getMonth()+1)]||'') + ' ' + mp.getFullYear();
+    }
     if (tipo === 'trimestre') return 'Este trimestre';
     if (tipo === 'anio') return 'Este año';
     if (tipo === 'custom' && RANGO_CUSTOM) return RANGO_CUSTOM.desde + ' — ' + RANGO_CUSTOM.hasta;
@@ -670,74 +702,198 @@ img{max-width:100%}
   }
 
   // ---------- render: gráfico ----------
+  /* Una sola métrica a la vez y un solo eje: facturado, ganancia, margen y
+     unidades tienen escalas muy distintas y mezclarlas en el mismo eje haría
+     que la lectura mienta. En "Facturado" la barra se parte en dos para ver
+     cuánto de lo facturado quedó como ganancia: misma unidad, misma escala. */
+  var METRICA = 'facturado';
+  var METRICAS = {
+    facturado: {valor: function(d){ return d.facturado; }, tipo:'dinero',
+                titulo:'Facturación', leyenda:true},
+    ganancia:  {valor: function(d){ return d.ganancia; }, tipo:'dinero',
+                titulo:'Ganancia neta', leyenda:false},
+    margen:    {valor: function(d){ return d.margen; }, tipo:'pct',
+                titulo:'Margen neto', leyenda:false},
+    unidades:  {valor: function(d){ return d.unidades; }, tipo:'num',
+                titulo:'Unidades iPhone', leyenda:false}
+  };
+
+  function fmtCorto(n, tipo){
+    if (tipo === 'pct') return (Math.round(n*10)/10).toLocaleString('es-AR') + '%';
+    if (tipo === 'num') return Math.round(n).toLocaleString('es-AR');
+    var a = Math.abs(n);
+    if (a >= 1e6) return '$' + (Math.round(n/1e5)/10).toLocaleString('es-AR') + 'M';
+    if (a >= 1e3) return '$' + Math.round(n/1e3).toLocaleString('es-AR') + 'k';
+    return '$' + Math.round(n);
+  }
+  function fmtSegun(n, tipo){
+    if (tipo === 'pct') return fmtPct(n);
+    if (tipo === 'num') return fmtNum(n);
+    return fmtMoney(n);
+  }
+
+  /** Serie por período con todo lo que el gráfico necesita mostrar. */
+  function serieDe(ordenes, lineas, campo){
+    var mapa = {};
+    ordenes.forEach(function(o){
+      var k = o[campo] || 'sin_dato';
+      if (!mapa[k]) mapa[k] = {clave:k, facturado:0, ganancia:0, ordenes:0, unidades:0};
+      mapa[k].facturado += Number(o.venta_total_hoja)||0;
+      mapa[k].ganancia += Number(o.ganancia_total)||0;
+      mapa[k].ordenes++;
+    });
+    lineas.forEach(function(l){
+      if (!l.es_iphone) return;
+      var k = l[campo] || 'sin_dato';
+      if (mapa[k]) mapa[k].unidades += Number(l.cantidad)||0;
+    });
+    return Object.keys(mapa).map(function(k){
+      var x = mapa[k];
+      x.margen = x.facturado > 0 ? (x.ganancia/x.facturado)*100 : 0;
+      return x;
+    }).sort(function(a,b){ return a.clave < b.clave ? -1 : 1; });
+  }
+
   function pintarGrafico(serie, gran){
     var svg = $('grafSvg'), ejes = $('grafEjes'), tip = $('grafTip');
+    var cfg = METRICAS[METRICA];
+    var periodo = gran === 'day' ? 'diaria' : 'mensual';
+
     if (!serie || !serie.length){
-      svg.innerHTML = '';
-      ejes.innerHTML = '';
-      $('grafTitulo').textContent = 'Facturación';
+      svg.innerHTML = ''; ejes.innerHTML = '';
+      $('grafStats').innerHTML = '';
+      $('grafLeyenda').innerHTML = '';
+      $('grafTitulo').textContent = cfg.titulo;
       $('grafSub').textContent = 'Sin ventas en este período';
       return;
     }
 
-    var W = 800, H = 220, padL = 14, padR = 786, top = 18, bot = 200;
-    var max = Math.max.apply(null, serie.map(function(m){ return m.venta_total_hoja; })) * 1.08;
-    if (max <= 0) max = 1;
     var n = serie.length;
-    var step = n > 1 ? (padR - padL) / (n - 1) : 0;
-    var pts = serie.map(function(m, i){
-      return {x: padL + step*i, y: top + (1 - m.venta_total_hoja/max)*(bot-top), m: m};
-    });
+    var vals = serie.map(cfg.valor);
+    var maxVal = Math.max.apply(null, vals);
+    if (maxVal <= 0) maxVal = 1;
+    var tope = maxVal * 1.12;
 
-    var linea = 'M' + pts.map(function(p){ return p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' L');
-    var area = linea + ' L' + pts[n-1].x.toFixed(1) + ',' + bot + ' L' + pts[0].x.toFixed(1) + ',' + bot + ' Z';
+    // --- cifras de arriba ---
+    var totalFact = serie.reduce(function(a,d){ return a + d.facturado; }, 0);
+    var totalGan = serie.reduce(function(a,d){ return a + d.ganancia; }, 0);
+    var total, promedio;
+    if (METRICA === 'margen'){
+      total = totalFact > 0 ? (totalGan/totalFact)*100 : 0;
+      promedio = total;
+    } else {
+      total = vals.reduce(function(a,v){ return a+v; }, 0);
+      promedio = total / n;
+    }
+    var iMejor = vals.indexOf(maxVal);
+    $('grafStats').innerHTML =
+      '<div class="graf-stat"><div class="l">' + (METRICA === 'margen' ? 'Margen del período' : 'Total del período') +
+        '</div><div class="v">' + fmtSegun(total, cfg.tipo) + '</div></div>' +
+      '<div class="graf-stat"><div class="l">Promedio por ' + (gran === 'day' ? 'día' : 'mes') +
+        '</div><div class="v">' + fmtSegun(promedio, cfg.tipo) + '</div></div>' +
+      '<div class="graf-stat"><div class="l">Mejor ' + (gran === 'day' ? 'día' : 'mes') + ': ' +
+        esc(etiquetaClave(serie[iMejor].clave, gran, true)) +
+        '</div><div class="v">' + fmtSegun(maxVal, cfg.tipo) + '</div></div>';
 
+    // --- geometría ---
+    var W = 820, H = 300, padL = 66, padR = 810, top = 14, bot = 250;
+    var ancho = padR - padL;
+    var slot = ancho / n;
+    var wBarra = Math.max(3, Math.min(46, slot * 0.62));
+    var yDe = function(v){ return bot - (v/tope) * (bot - top); };
+
+    // --- grilla + eje de valores ---
     var grid = '';
     for (var g = 0; g <= 4; g++){
-      var gy = top + (bot-top)*g/4;
-      grid += '<line x1="'+padL+'" y1="'+gy+'" x2="'+padR+'" y2="'+gy+'" stroke="rgba(12,20,40,.07)" stroke-width="1"/>';
+      var v = tope * g / 4, gy = yDe(v);
+      grid += '<line x1="'+padL+'" y1="'+gy.toFixed(1)+'" x2="'+padR+'" y2="'+gy.toFixed(1)+
+              '" stroke="rgba(12,20,40,.08)" stroke-width="1"/>' +
+              '<text x="'+(padL-12)+'" y="'+(gy+4).toFixed(1)+'" text-anchor="end" ' +
+              'font-size="12" fill="#71809a">' + esc(fmtCorto(v, cfg.tipo)) + '</text>';
     }
 
-    var puntos = pts.map(function(p, i){
-      var ultimo = i === n-1;
-      return '<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="'+(ultimo?4:3.4)+'" '+
-             'fill="'+(ultimo?'#ffffff':'#0071e3')+'" stroke="#0071e3" stroke-width="'+(ultimo?2.5:0)+'"/>';
+    // --- barras ---
+    var barras = serie.map(function(d, i){
+      var x = padL + slot*i + (slot - wBarra)/2;
+      var val = cfg.valor(d);
+      var yTop = yDe(Math.max(val, 0));
+      var alto = Math.max(0, bot - yTop);
+      var r = Math.min(5, wBarra/2);
+
+      if (METRICA === 'facturado' && d.facturado > 0){
+        // la ganancia comparte base con todas las demás: así se compara de un vistazo
+        var altoGan = Math.max(0, (Math.max(d.ganancia,0)/tope) * (bot - top));
+        var yGan = bot - altoGan;
+        return '<g data-i="'+i+'">' +
+          '<rect x="'+x.toFixed(1)+'" y="'+yTop.toFixed(1)+'" width="'+wBarra.toFixed(1)+
+            '" height="'+alto.toFixed(1)+'" rx="'+r+'" fill="#0071e3" opacity=".2"/>' +
+          '<rect x="'+x.toFixed(1)+'" y="'+yGan.toFixed(1)+'" width="'+wBarra.toFixed(1)+
+            '" height="'+altoGan.toFixed(1)+'" rx="'+Math.min(r, altoGan/2).toFixed(1)+'" fill="#0071e3"/>' +
+        '</g>';
+      }
+      return '<g data-i="'+i+'"><rect x="'+x.toFixed(1)+'" y="'+yTop.toFixed(1)+'" width="'+wBarra.toFixed(1)+
+        '" height="'+alto.toFixed(1)+'" rx="'+r+'" fill="#0071e3" opacity=".82"/></g>';
     }).join('');
 
-    var hits = pts.map(function(p, i){
-      return '<rect data-i="'+i+'" x="'+(p.x-step/2).toFixed(1)+'" y="0" width="'+(step||40).toFixed(1)+
-             '" height="'+H+'" fill="transparent" class="hit"/>';
+    // --- línea de promedio (no aplica al margen: ahí el promedio ES el total) ---
+    var lineaProm = '';
+    if (METRICA !== 'margen'){
+      var yP = yDe(promedio);
+      lineaProm = '<line x1="'+padL+'" y1="'+yP.toFixed(1)+'" x2="'+padR+'" y2="'+yP.toFixed(1)+
+        '" stroke="#0b0f16" stroke-width="1.4" stroke-dasharray="5 4" opacity=".38"/>' +
+        '<text x="'+(padR-2)+'" y="'+(yP-7).toFixed(1)+'" text-anchor="end" font-size="11.5" ' +
+        'fill="#404a5c">promedio ' + esc(fmtCorto(promedio, cfg.tipo)) + '</text>';
+    }
+
+    var hits = serie.map(function(d, i){
+      return '<rect class="hit" data-i="'+i+'" x="'+(padL + slot*i).toFixed(1)+'" y="'+top+
+             '" width="'+slot.toFixed(1)+'" height="'+(bot-top)+'" fill="transparent"/>';
     }).join('');
 
-    svg.innerHTML =
-      '<defs><linearGradient id="areaAzul" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0%" stop-color="#0071e3" stop-opacity=".22"/>' +
-      '<stop offset="100%" stop-color="#0071e3" stop-opacity="0"/></linearGradient></defs>' +
-      grid +
-      '<path d="'+area+'" fill="url(#areaAzul)"/>' +
-      '<path d="'+linea+'" fill="none" stroke="#0071e3" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>' +
-      puntos + hits;
+    svg.innerHTML = grid + barras + lineaProm + hits;
 
+    // --- interacción ---
+    var grupos = svg.querySelectorAll('g[data-i]');
     Array.prototype.forEach.call(svg.querySelectorAll('.hit'), function(rect){
-      rect.addEventListener('mousemove', function(){
-        var i = +rect.getAttribute('data-i'), p = pts[i];
+      rect.addEventListener('mouseenter', function(){
+        var i = +rect.getAttribute('data-i'), d = serie[i];
+        Array.prototype.forEach.call(grupos, function(g, j){ g.style.opacity = j === i ? 1 : .45; });
         var box = svg.getBoundingClientRect();
-        tip.style.left = (p.x * (box.width/W)) + 'px';
-        tip.style.top = (p.y / H * box.height) + 'px';
+        var cx = padL + slot*i + slot/2;
+        tip.style.left = (cx * (box.width/W)) + 'px';
+        tip.style.top = (yDe(cfg.valor(d)) / H * box.height) + 'px';
         tip.style.opacity = 1;
-        tip.textContent = etiquetaClave(p.m.clave, gran, true) + ' · ' + fmtMoney(p.m.venta_total_hoja);
+        tip.innerHTML =
+          '<b>' + esc(etiquetaClave(d.clave, gran, true)) + '</b><br>' +
+          'Facturado ' + fmtMoney(d.facturado) + '<br>' +
+          'Ganancia ' + fmtMoney(d.ganancia) + ' · ' + fmtPct(d.margen) + '<br>' +
+          '<span class="t-tenue">' + fmtNum(d.ordenes) + (d.ordenes === 1 ? ' orden' : ' órdenes') +
+          ' · ' + fmtNum(d.unidades) + ' u.</span>';
       });
-      rect.addEventListener('mouseleave', function(){ tip.style.opacity = 0; });
+      rect.addEventListener('mouseleave', function(){
+        tip.style.opacity = 0;
+        Array.prototype.forEach.call(grupos, function(g){ g.style.opacity = 1; });
+      });
     });
 
+    // --- eje de períodos ---
     var cadaN = n > 16 ? Math.ceil(n/12) : 1;
-    ejes.innerHTML = serie.map(function(m, i){
+    ejes.innerHTML = serie.map(function(d, i){
       var ultimo = i === n-1;
-      if (n > 16 && i % cadaN !== 0 && !ultimo) return '<span></span>';
-      return '<span>' + etiquetaClave(m.clave, gran, false) + (ultimo ? '*' : '') + '</span>';
+      var txt = (n > 16 && i % cadaN !== 0 && !ultimo) ? '' :
+                esc(etiquetaClave(d.clave, gran, false)) + (ultimo ? '*' : '');
+      return '<span style="flex:1;text-align:center">' + txt + '</span>';
     }).join('');
+    ejes.style.paddingLeft = (padL/W*100) + '%';
+    ejes.style.paddingRight = ((W-padR)/W*100) + '%';
 
-    $('grafTitulo').textContent = gran === 'day' ? 'Facturación diaria' : 'Facturación mensual';
+    $('grafLeyenda').innerHTML = cfg.leyenda
+      ? '<span><i style="background:#0071e3"></i> Ganancia neta</span>' +
+        '<span><i style="background:rgba(0,113,227,.2)"></i> Costo y gastos</span>' +
+        '<span><i style="background:#0b0f16;opacity:.38"></i> Promedio del período</span>'
+      : (METRICA === 'margen' ? '' : '<span><i style="background:#0b0f16;opacity:.38"></i> Promedio del período</span>');
+
+    $('grafTitulo').textContent = cfg.titulo + ' ' + periodo;
     $('grafSub').textContent = etiquetaClave(serie[0].clave, gran, true) + ' — ' +
                                etiquetaClave(serie[n-1].clave, gran, true);
   }
@@ -791,7 +947,7 @@ img{max-width:100%}
       var a = dk.split('-'), b = hk.split('-');
       out.push({
         etiqueta: a[2] + ' ' + (MESES[a[1]]||'') + ' – ' + b[2] + ' ' + (MESES[b[1]]||''),
-        venta: venta, margen: venta > 0 ? (gan/venta)*100 : 0, actual: i === 0
+        venta: venta, ganancia: gan, margen: venta > 0 ? (gan/venta)*100 : 0, actual: i === 0
       });
     }
     return out;
@@ -805,7 +961,7 @@ img{max-width:100%}
       var venta = sumar(en,'venta_total_hoja'), gan = sumar(en,'ganancia_total');
       out.push({
         etiqueta: (MESES[pad2(d.getMonth()+1)]||clave) + ' ' + d.getFullYear(),
-        venta: venta, margen: venta > 0 ? (gan/venta)*100 : 0, actual: i === 0
+        venta: venta, ganancia: gan, margen: venta > 0 ? (gan/venta)*100 : 0, actual: i === 0
       });
     }
     return out;
@@ -821,34 +977,66 @@ img{max-width:100%}
         '<div class="comp-nom">' + esc(it.etiqueta) + (it.actual ? ' *' : '') + '</div>' +
         '<div class="comp-barra"><div class="barra"><i style="width:' + pct + '%"></i></div></div>' +
         '<div class="comp-cifras"><div class="v">' + fmtMoney(it.venta) + '</div>' +
+          '<div class="g">' + fmtMoney(it.ganancia) + '</div>' +
           '<div class="m">margen ' + fmtPct(it.margen) + '</div></div>' +
       '</div>';
     }).join('');
   }
 
   // ---------- render: cierres ----------
+  /* Los meses se buscan por clave calculada, no por posición: si un mes no
+     tuvo ventas no aparece en el payload y correría la lista. */
   function pintarCierres(){
     var tri = (PAYLOAD && PAYLOAD.trimestral) || [];
     var men = (PAYLOAD && PAYLOAD.mensual) || [];
-    if (!tri.length || !men.length){ $('gridCierres').innerHTML = ''; return; }
+    if (!tri.length && !men.length){ $('gridCierres').innerHTML = ''; return; }
 
-    var triAct = tri[tri.length-1], menAct = men[men.length-1];
+    var vacio = {venta_total_hoja:0, ganancia_total:0, margen_pct:0};
+    function buscarMes(clave){
+      return men.filter(function(m){ return m.clave === clave; })[0] || vacio;
+    }
+    function buscarTri(clave){
+      return tri.filter(function(t){ return t.clave === clave; })[0] || vacio;
+    }
+
+    var hoy = new Date();
+    function mesDe(offset){
+      var d = new Date(hoy.getFullYear(), hoy.getMonth()-offset, 1);
+      return {
+        clave: d.getFullYear() + '-' + pad2(d.getMonth()+1),
+        nombre: (MESES_L[pad2(d.getMonth()+1)]||'') + ' ' + d.getFullYear()
+      };
+    }
+    var m0 = mesDe(0), m1 = mesDe(1), m2 = mesDe(2);
+    var claveTri = hoy.getFullYear() + '-T' + (Math.floor(hoy.getMonth()/3)+1);
     var mejorTri = tri.slice().sort(function(a,b){ return b.venta_total_hoja - a.venta_total_hoja; })[0];
 
-    function tKey(t){ var p = String(t.clave).split('-T'); return 'T' + p[1] + ' · ' + p[0]; }
-    function mKey(m){ var p = String(m.clave).split('-'); return (MESES_L[p[1]]||m.clave) + ' ' + p[0]; }
+    function tNombre(t){
+      if (!t || !t.clave) return '—';
+      var p = String(t.clave).split('-T');
+      return 'T' + p[1] + ' · ' + p[0];
+    }
 
     var cards = [
-      {tag:'Trimestre en curso', tit:tKey(triAct), val:triAct.venta_total_hoja, mar:triAct.margen_pct},
-      {tag:'Mes en curso', tit:mKey(menAct), val:menAct.venta_total_hoja, mar:menAct.margen_pct},
-      {tag:'Mejor trimestre', tit:tKey(mejorTri), val:mejorTri.venta_total_hoja, mar:mejorTri.margen_pct}
+      {tag:'Trimestre en curso', tit:'T' + (Math.floor(hoy.getMonth()/3)+1) + ' · ' + hoy.getFullYear(),
+       d:buscarTri(claveTri), curso:true},
+      {tag:'Mes en curso', tit:m0.nombre, d:buscarMes(m0.clave), curso:true},
+      {tag:'Mes pasado', tit:m1.nombre, d:buscarMes(m1.clave), curso:false},
+      {tag:'Mes anterior', tit:m2.nombre, d:buscarMes(m2.clave), curso:false},
+      {tag:'Mejor trimestre', tit:tNombre(mejorTri), d:mejorTri || vacio, curso:false}
     ];
+
     $('gridCierres').innerHTML = cards.map(function(c){
       return '<div class="lg-tarjeta">' +
         '<p class="mini-label">' + esc(c.tag) + '</p>' +
         '<p style="font-size:14.5px;font-weight:600;margin:8px 0 0">' + esc(c.tit) + '</p>' +
-        '<p class="kpi-valor" style="font-size:26px;margin-top:6px">' + fmtMoney(c.val) + '</p>' +
-        '<p class="mini-label" style="margin-top:7px">Margen ' + fmtPct(c.mar) + '</p>' +
+        '<p class="kpi-valor" style="font-size:25px;margin-top:8px">' + fmtMoney(c.d.venta_total_hoja) + '</p>' +
+        '<p class="mini-label" style="margin-top:2px">facturado</p>' +
+        '<div class="cierre-gan">' +
+          '<p class="mini-label">' + (c.curso ? 'Ganancia en curso' : 'Ganancia neta') + '</p>' +
+          '<p class="mini-valor azul" style="font-size:18px">' + fmtMoney(c.d.ganancia_total) + '</p>' +
+          '<p class="mini-label" style="margin-top:3px">margen ' + fmtPct(c.d.margen_pct) + '</p>' +
+        '</div>' +
       '</div>';
     }).join('');
   }
@@ -991,16 +1179,26 @@ img{max-width:100%}
   }
 
   // ---------- orquestación ----------
+  function granularidadActual(){
+    var r = rangoDe(RANGO);
+    if (r && r.desde && r.hasta){
+      var dias = (new Date(r.hasta) - new Date(r.desde)) / 86400000;
+      if (dias <= 45) return {gran:'day', campo:'dia_key'};
+    }
+    return {gran:'month', campo:'mes_key'};
+  }
+
+  function pintarGraficoActual(){
+    var d = datosFiltrados();
+    var g = granularidadActual();
+    pintarGrafico(serieDe(d.ordenes, d.lineas, g.campo), g.gran);
+  }
+
   function pintarResumen(){
     var d = datosFiltrados();
     pintarKpis(kpisDe(d.ordenes, d.lineas));
 
-    var gran = 'month', campo = 'mes_key';
-    if (d.rango){
-      var dias = (new Date(d.rango.hasta) - new Date(d.rango.desde)) / 86400000;
-      if (dias <= 45){ gran = 'day'; campo = 'dia_key'; }
-    }
-    pintarGrafico(agruparPor(d.ordenes, campo), gran);
+    pintarGraficoActual();
 
     pintarRanking('listaModelos', modelosDe(d.lineas), {
       valor: function(m){ return m.cantidad; },
@@ -1078,6 +1276,16 @@ img{max-width:100%}
 
   document.addEventListener('click', function(ev){
     if (!$('filtros').contains(ev.target)) $('popFechas').classList.remove('is-open');
+  });
+
+  $('subTabsMetrica').addEventListener('click', function(ev){
+    var t = ev.target.closest('.sub-tab');
+    if (!t) return;
+    METRICA = t.getAttribute('data-metrica');
+    Array.prototype.forEach.call(document.querySelectorAll('#subTabsMetrica .sub-tab'), function(s2){
+      s2.classList.toggle('is-active', s2 === t);
+    });
+    pintarGraficoActual();
   });
 
   $('subTabsComp').addEventListener('click', function(ev){
