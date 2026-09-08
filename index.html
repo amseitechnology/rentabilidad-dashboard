@@ -187,12 +187,16 @@ img{max-width:100%}
 .kpi-valor{font-size:34px;font-weight:700;letter-spacing:-.035em;margin:8px 0 0;
   font-variant-numeric:tabular-nums;line-height:1.1}
 .kpi-valor.azul{color:var(--lg-azul)}
+.kpi-valor.verde{color:var(--lg-verde)}
+.kpi-valor.coral{color:var(--lg-coral)}
 .kpi-pie{font-size:13.5px;color:var(--lg-tinta-2);margin:9px 0 0}
 .kpi-pie b{font-weight:650;color:var(--lg-tinta)}
 .mini-label{font-size:12.5px;color:var(--lg-tenue);margin:0}
 .mini-valor{font-size:21px;font-weight:700;letter-spacing:-.025em;margin:6px 0 0;
   font-variant-numeric:tabular-nums}
 .mini-valor.azul{color:var(--lg-azul)}
+.mini-valor.verde{color:var(--lg-verde)}
+.mini-valor.coral{color:var(--lg-coral)}
 
 /* grafico */
 .grafico-cab{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
@@ -367,6 +371,11 @@ img{max-width:100%}
             <p class="kpi-pie">Margen neto <b id="kMargenNeto">—</b> · bruto <b id="kMargenBruto">—</b></p>
           </div>
           <div class="lg-tarjeta">
+            <p class="kpi-label">Utilidad final</p>
+            <p class="kpi-valor verde" id="kUtilidad">—</p>
+            <p class="kpi-pie">Después de <b id="kGastosFijos">—</b> de gastos fijos</p>
+          </div>
+          <div class="lg-tarjeta">
             <p class="kpi-label">Unidades iPhone</p>
             <p class="kpi-valor" id="kUnidades">—</p>
             <p class="kpi-pie">en <b id="kOrdenes2">—</b> órdenes despachadas</p>
@@ -398,11 +407,13 @@ img{max-width:100%}
 
       <section class="lg-panel">
         <h2 class="lg-h2">Desglose del período</h2>
-        <p class="lg-sub">De la facturación a lo que queda limpio.</p>
+        <p class="lg-sub">De la facturación a lo que queda limpio, ya descontados los gastos fijos del mes.</p>
         <div class="lg-grid">
           <div class="lg-tarjeta"><p class="mini-label">Ganancia bruta</p><p class="mini-valor" id="mGananciaBruta">—</p></div>
           <div class="lg-tarjeta"><p class="mini-label">Ganancia 2 (− gastos)</p><p class="mini-valor" id="mGanancia2">—</p></div>
           <div class="lg-tarjeta"><p class="mini-label">Ganancia total (− comisión)</p><p class="mini-valor azul" id="mGananciaTotal">—</p></div>
+          <div class="lg-tarjeta"><p class="mini-label">Gastos fijos del período</p><p class="mini-valor coral" id="mGastosFijos">—</p></div>
+          <div class="lg-tarjeta"><p class="mini-label">Utilidad final</p><p class="mini-valor verde" id="mUtilidad">—</p></div>
           <div class="lg-tarjeta"><p class="mini-label">Ticket promedio</p><p class="mini-valor" id="mTicket">—</p></div>
           <div class="lg-tarjeta"><p class="mini-label">Gastos</p><p class="mini-valor" id="mGastos">—</p></div>
           <div class="lg-tarjeta"><p class="mini-label">Envío</p><p class="mini-valor" id="mEnvio">—</p></div>
@@ -616,6 +627,36 @@ img{max-width:100%}
     return {ordenes: ordenes, lineas: lineas, rango: r};
   }
 
+  /** Gasto fijo imputable a un rango: se suman los meses que toca, completos.
+   *  Un gasto fijo no se prorratea por días — el alquiler se paga entero
+   *  aunque mires medio mes. En rangos cortos (Hoy, Esta semana) eso hace
+   *  que la utilidad final se vea castigada, y es correcto que así sea. */
+  function gastosDelRango(rango){
+    var g = (PAYLOAD && PAYLOAD.gastos) || null;
+    if (!g) return 0;
+    if (!rango || !rango.desde || !rango.hasta) return Number(g.total) || 0;
+
+    var d = new Date(rango.desde + 'T00:00:00');
+    var h = new Date(rango.hasta + 'T00:00:00');
+    if (isNaN(d) || isNaN(h)) return 0;
+
+    var total = 0;
+    var cur = new Date(d.getFullYear(), d.getMonth(), 1);
+    var tope = new Date(h.getFullYear(), h.getMonth(), 1);
+    while (cur <= tope){
+      total += Number((g.por_mes || {})[cur.getFullYear() + '-' + pad2(cur.getMonth()+1)]) || 0;
+      cur.setMonth(cur.getMonth() + 1);
+    }
+    return total;
+  }
+
+  /** Gasto fijo de un mes puntual, para las tarjetas de cierre. */
+  function gastoDelMes(clave){
+    var g = (PAYLOAD && PAYLOAD.gastos) || null;
+    if (!g || !g.por_mes) return 0;
+    return Number(g.por_mes[clave]) || 0;
+  }
+
   function kpisDe(ordenes, lineas){
     var facturado = sumar(ordenes,'venta_total_hoja');
     var gBruta = sumar(ordenes,'ganancia_bruta_hoja');
@@ -681,7 +722,16 @@ img{max-width:100%}
   }
 
   // ---------- render: KPIs ----------
-  function pintarKpis(k){
+  function pintarKpis(k, gastoFijo){
+    var utilidad = k.ganancia_total - (gastoFijo || 0);
+    var enRojo = utilidad < 0;   // una utilidad negativa no puede verse verde
+    $('kUtilidad').textContent = fmtMoney(utilidad);
+    $('kUtilidad').className = 'kpi-valor ' + (enRojo ? 'coral' : 'verde');
+    $('kGastosFijos').textContent = fmtMoney(gastoFijo || 0);
+    $('mGastosFijos').textContent = fmtMoney(gastoFijo || 0);
+    $('mUtilidad').textContent = fmtMoney(utilidad);
+    $('mUtilidad').className = 'mini-valor ' + (enRojo ? 'coral' : 'verde');
+
     $('kFacturado').textContent = fmtMoney(k.facturado);
     $('kOrdenesTxt').textContent = fmtNum(k.ordenes) + (k.ordenes === 1 ? ' orden' : ' órdenes');
     $('kTicket').textContent = fmtMoney(k.ticket_promedio);
@@ -1017,16 +1067,28 @@ img{max-width:100%}
       return 'T' + p[1] + ' · ' + p[0];
     }
 
+    // gasto fijo del trimestre = suma de sus tres meses
+    function gastoTrimestre(claveT){
+      var p = String(claveT).split('-T');
+      if (p.length < 2) return 0;
+      var anio = Number(p[0]), t = Number(p[1]);
+      var suma = 0;
+      for (var i = 0; i < 3; i++) suma += gastoDelMes(anio + '-' + pad2((t-1)*3 + 1 + i));
+      return suma;
+    }
+
     var cards = [
       {tag:'Trimestre en curso', tit:'T' + (Math.floor(hoy.getMonth()/3)+1) + ' · ' + hoy.getFullYear(),
-       d:buscarTri(claveTri), curso:true},
-      {tag:'Mes en curso', tit:m0.nombre, d:buscarMes(m0.clave), curso:true},
-      {tag:'Mes pasado', tit:m1.nombre, d:buscarMes(m1.clave), curso:false},
-      {tag:'Mes anterior', tit:m2.nombre, d:buscarMes(m2.clave), curso:false},
-      {tag:'Mejor trimestre', tit:tNombre(mejorTri), d:mejorTri || vacio, curso:false}
+       d:buscarTri(claveTri), curso:true, gasto:gastoTrimestre(claveTri)},
+      {tag:'Mes en curso', tit:m0.nombre, d:buscarMes(m0.clave), curso:true, gasto:gastoDelMes(m0.clave)},
+      {tag:'Mes pasado', tit:m1.nombre, d:buscarMes(m1.clave), curso:false, gasto:gastoDelMes(m1.clave)},
+      {tag:'Mes anterior', tit:m2.nombre, d:buscarMes(m2.clave), curso:false, gasto:gastoDelMes(m2.clave)},
+      {tag:'Mejor trimestre', tit:tNombre(mejorTri), d:mejorTri || vacio, curso:false,
+       gasto:gastoTrimestre(mejorTri ? mejorTri.clave : '')}
     ];
 
     $('gridCierres').innerHTML = cards.map(function(c){
+      var utilidad = (Number(c.d.ganancia_total) || 0) - (c.gasto || 0);
       return '<div class="lg-tarjeta">' +
         '<p class="mini-label">' + esc(c.tag) + '</p>' +
         '<p style="font-size:14.5px;font-weight:600;margin:8px 0 0">' + esc(c.tit) + '</p>' +
@@ -1036,6 +1098,12 @@ img{max-width:100%}
           '<p class="mini-label">' + (c.curso ? 'Ganancia en curso' : 'Ganancia neta') + '</p>' +
           '<p class="mini-valor azul" style="font-size:18px">' + fmtMoney(c.d.ganancia_total) + '</p>' +
           '<p class="mini-label" style="margin-top:3px">margen ' + fmtPct(c.d.margen_pct) + '</p>' +
+        '</div>' +
+        '<div class="cierre-gan">' +
+          '<p class="mini-label">' + (c.curso ? 'Utilidad en curso' : 'Utilidad final') + '</p>' +
+          '<p class="mini-valor ' + (utilidad < 0 ? 'coral' : 'verde') + '" style="font-size:18px">' +
+            fmtMoney(utilidad) + '</p>' +
+          '<p class="mini-label" style="margin-top:3px">menos ' + fmtMoney(c.gasto || 0) + ' de gastos</p>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -1196,7 +1264,7 @@ img{max-width:100%}
 
   function pintarResumen(){
     var d = datosFiltrados();
-    pintarKpis(kpisDe(d.ordenes, d.lineas));
+    pintarKpis(kpisDe(d.ordenes, d.lineas), gastosDelRango(d.rango));
 
     pintarGraficoActual();
 
