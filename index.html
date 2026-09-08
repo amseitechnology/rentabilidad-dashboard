@@ -166,12 +166,23 @@ img{max-width:100%}
 .tab.is-active{background:var(--lg-tinta);color:var(--lg-lienzo);box-shadow:none}
 
 /* chips de rango de fecha */
-.filtros{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 24px;position:relative}
+.filtros{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 12px;position:relative}
 .chip{padding:7px 15px;border-radius:999px;font-size:13.5px;font-weight:600;cursor:pointer;
   background:var(--lg-vidrio-2);color:var(--lg-tenue);border:0;font-family:inherit;
   box-shadow:inset 0 1px 0 var(--lg-brillo);transition:background .15s,color .15s}
 .chip:hover{color:var(--lg-tinta)}
 .chip.is-active{background:rgba(0,113,227,.12);color:var(--lg-azul)}
+.filtros-meses{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px;padding-top:12px;
+  border-top:1px solid var(--lg-borde)}
+.chip-mes{padding:6px 13px;font-size:12.5px}
+.chip-mes.is-off{opacity:.38;cursor:default;pointer-events:none}
+.punto-mes{width:5px;height:5px;border-radius:50%;background:var(--lg-azul);
+  display:inline-block;margin-left:6px;vertical-align:middle}
+.comparativa-mes{font-size:12.5px;color:var(--lg-tenue);margin:0 0 24px;min-height:1px}
+.comparativa-mes b{font-weight:650}
+.comparativa-mes .sube{color:var(--lg-verde)}
+.comparativa-mes .baja{color:var(--lg-coral)}
+
 .pop{position:absolute;top:calc(100% + 8px);left:0;z-index:30;padding:18px;
   border-radius:var(--lg-radio-2);background:#fff;box-shadow:0 20px 60px rgba(12,20,40,.18);
   display:none;gap:12px;flex-direction:column;min-width:250px}
@@ -354,6 +365,9 @@ img{max-width:100%}
         <button class="lg-btn" type="button" id="btnAplicarRango">Aplicar rango</button>
       </div>
     </div>
+
+    <div class="filtros-meses" id="filtrosMeses"></div>
+    <p class="comparativa-mes" id="comparativaMes"></p>
 
     <!-- ==================== VISTA: RESUMEN ==================== -->
     <div id="vistaResumen">
@@ -577,6 +591,15 @@ img{max-width:100%}
   function rangoDe(tipo){
     var hoy = new Date();
     var fin = diaKey(hoy), ini;
+    if (tipo.indexOf('mes:') === 0){
+      // un mes puntual; si es el mes en curso se corta en hoy, no en el día 30
+      var pm = tipo.slice(4).split('-');
+      var aM = Number(pm[0]), mM = Number(pm[1]);
+      var iniM = new Date(aM, mM - 1, 1);
+      var finM = new Date(aM, mM, 0);
+      if (aM === hoy.getFullYear() && mM - 1 === hoy.getMonth()) finM = hoy;
+      return {desde: diaKey(iniM), hasta: diaKey(finM)};
+    }
     if (tipo === 'hoy') ini = fin;
     else if (tipo === 'semana') ini = diaKey(inicioSemana(hoy));
     else if (tipo === 'mes') ini = diaKey(inicioMes(hoy));
@@ -593,6 +616,10 @@ img{max-width:100%}
     return {desde: ini, hasta: fin};
   }
   function etiquetaRango(tipo){
+    if (tipo.indexOf('mes:') === 0){
+      var pe = tipo.slice(4).split('-');
+      return (MESES_L[pe[1]] || tipo) + ' ' + pe[0];
+    }
     if (tipo === 'todo') return 'Todo el histórico';
     if (tipo === 'hoy') return 'Hoy';
     if (tipo === 'semana') return 'Esta semana';
@@ -627,10 +654,10 @@ img{max-width:100%}
     return {ordenes: ordenes, lineas: lineas, rango: r};
   }
 
-  /** Gasto fijo imputable a un rango: se suman los meses que toca, completos.
-   *  Un gasto fijo no se prorratea por días — el alquiler se paga entero
-   *  aunque mires medio mes. En rangos cortos (Hoy, Esta semana) eso hace
-   *  que la utilidad final se vea castigada, y es correcto que así sea. */
+  /** Gasto fijo imputable a un rango, prorrateado por días.
+   *  Un mes completo imputa el 100%; medio mes, la mitad. Sin esto, mirar
+   *  "Hoy" comparaba la ganancia de un día contra el alquiler del mes entero
+   *  y la utilidad daba negativa por un problema de escala, no de negocio. */
   function gastosDelRango(rango){
     var g = (PAYLOAD && PAYLOAD.gastos) || null;
     if (!g) return 0;
@@ -638,13 +665,21 @@ img{max-width:100%}
 
     var d = new Date(rango.desde + 'T00:00:00');
     var h = new Date(rango.hasta + 'T00:00:00');
-    if (isNaN(d) || isNaN(h)) return 0;
+    if (isNaN(d) || isNaN(h) || h < d) return 0;
 
     var total = 0;
     var cur = new Date(d.getFullYear(), d.getMonth(), 1);
     var tope = new Date(h.getFullYear(), h.getMonth(), 1);
     while (cur <= tope){
-      total += Number((g.por_mes || {})[cur.getFullYear() + '-' + pad2(cur.getMonth()+1)]) || 0;
+      var gastoMes = Number((g.por_mes || {})[cur.getFullYear() + '-' + pad2(cur.getMonth()+1)]) || 0;
+      if (gastoMes){
+        var diasMes = new Date(cur.getFullYear(), cur.getMonth()+1, 0).getDate();
+        var finMes = new Date(cur.getFullYear(), cur.getMonth(), diasMes);
+        var desde = cur > d ? cur : d;
+        var hasta = finMes < h ? finMes : h;
+        var dias = Math.round((hasta - desde) / 86400000) + 1;
+        if (dias > 0) total += gastoMes * (Math.min(dias, diasMes) / diasMes);
+      }
       cur.setMonth(cur.getMonth() + 1);
     }
     return total;
@@ -1290,6 +1325,8 @@ img{max-width:100%}
     $('pieActualizado').textContent = gen.toLocaleString('es-AR');
 
     pintarPendientes();
+    pintarChipsMeses();
+    pintarComparativaMes();
     if (VISTA === 'resumen'){
       pintarResumen();
       pintarComparativo();
@@ -1297,6 +1334,64 @@ img{max-width:100%}
     } else if (VISTA === 'clientes'){
       pintarVistaClientes();
     }
+  }
+
+  /** Segunda fila de filtros: los 12 meses del año.
+   *  Los meses sin ventas ni gastos quedan apagados para no llevar a una
+   *  pantalla vacía; el mes en curso se marca con un punto. */
+  function pintarChipsMeses(){
+    if (!PAYLOAD) return;
+    var g = PAYLOAD.gastos || {por_mes:{}, anio:null};
+    var conVentas = {};
+    (PAYLOAD.mensual || []).forEach(function(m){ conVentas[m.clave] = true; });
+
+    var anio = g.anio || new Date().getFullYear();
+    var hoy = new Date();
+    var html = '';
+    for (var m = 1; m <= 12; m++){
+      var clave = anio + '-' + pad2(m);
+      var hayDatos = !!conVentas[clave] || (Number((g.por_mes||{})[clave]) || 0) > 0;
+      var esActual = (anio === hoy.getFullYear() && m === hoy.getMonth() + 1);
+      var activo = RANGO === 'mes:' + clave;
+      html += '<button type="button" class="chip chip-mes' +
+              (hayDatos ? '' : ' is-off') + (activo ? ' is-active' : '') + '"' +
+              (hayDatos ? ' data-rango="mes:' + clave + '"' : '') + '>' +
+              (MESES[pad2(m)] || m) + (esActual ? '<i class="punto-mes"></i>' : '') +
+              '</button>';
+    }
+    $('filtrosMeses').innerHTML = html;
+  }
+
+  /** Cuando hay un mes elegido, se compara contra el anterior. */
+  function pintarComparativaMes(){
+    var el = $('comparativaMes');
+    if (!PAYLOAD || RANGO.indexOf('mes:') !== 0){ el.innerHTML = ''; return; }
+
+    var pm = RANGO.slice(4).split('-');
+    var anio = Number(pm[0]), mes = Number(pm[1]);
+    var prev = new Date(anio, mes - 2, 1);
+    var clavePrev = prev.getFullYear() + '-' + pad2(prev.getMonth() + 1);
+
+    var men = PAYLOAD.mensual || [];
+    function datosDe(clave){ return men.filter(function(x){ return x.clave === clave; })[0]; }
+    var act = datosDe(anio + '-' + pad2(mes)), ant = datosDe(clavePrev);
+    if (!act || !ant || !ant.venta_total_hoja){ el.innerHTML = ''; return; }
+
+    function delta(a, b){
+      var pct = ((a - b) / Math.abs(b)) * 100;
+      var cls = pct >= 0 ? 'sube' : 'baja';
+      return '<b class="' + cls + '">' + (pct >= 0 ? '+' : '') +
+             pct.toLocaleString('es-AR', {maximumFractionDigits:1}) + '%</b>';
+    }
+
+    var hoy = new Date();
+    var enCurso = (anio === hoy.getFullYear() && mes - 1 === hoy.getMonth());
+    var nombrePrev = (MESES_L[pad2(prev.getMonth()+1)] || '');
+
+    el.innerHTML = 'Contra ' + nombrePrev + ': facturación ' +
+      delta(act.venta_total_hoja, ant.venta_total_hoja) + ' · ganancia ' +
+      delta(act.ganancia_total, ant.ganancia_total) +
+      (enCurso ? ' <span>— ojo: el mes va por el día ' + hoy.getDate() + ', todavía no cerró</span>' : '');
   }
 
   // ---------- interacción ----------
@@ -1325,6 +1420,25 @@ img{max-width:100%}
     $('popFechas').classList.remove('is-open');
     RANGO = tipo;
     Array.prototype.forEach.call(document.querySelectorAll('#filtros .chip'), function(c){
+      c.classList.toggle('is-active', c === chip);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('#filtrosMeses .chip-mes'), function(c){
+      c.classList.remove('is-active');
+    });
+    pintarTodo();
+  });
+
+  $('filtrosMeses').addEventListener('click', function(ev){
+    var chip = ev.target.closest('.chip-mes');
+    if (!chip || chip.classList.contains('is-off')) return;
+    var tipo = chip.getAttribute('data-rango');
+    if (!tipo) return;
+    $('popFechas').classList.remove('is-open');
+    RANGO = tipo;
+    Array.prototype.forEach.call(document.querySelectorAll('#filtros .chip'), function(c){
+      c.classList.remove('is-active');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('#filtrosMeses .chip-mes'), function(c){
       c.classList.toggle('is-active', c === chip);
     });
     pintarTodo();
