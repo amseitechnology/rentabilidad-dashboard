@@ -724,12 +724,80 @@ img{max-width:100%}
     }).sort(function(a,b){ return a.clave < b.clave ? -1 : 1; });
   }
 
+  /** Sufijos que sí son otro equipo. Un color o un grado no lo son. */
+  var SUFIJOS_MODELO = {'pro':1, 'max':1, 'plus':1, 'mini':1, 'air':1};
+
+  /** Nombre comercial básico de un modelo: familia + capacidad, sin color ni ruido.
+   *  "Apple iPhone 14 Pro A2650 Black GSM Unlocked GSM Unlocked" -> "iPhone 14 Pro"
+   *  La hoja escribe el mismo equipo de docenas de formas (color, A-number, grado,
+   *  estado del vidrio, mayúsculas sueltas), y sin esto el ranking de rotación
+   *  cuenta 312 modelos que en realidad son 32, con las unidades repartidas entre
+   *  ellos. La capacidad sí separa: un 256 y un 1TB no son el mismo producto. */
+  function modeloBase(nombre){
+    var s = String(nombre || '').trim();
+    if (!s) return '';
+
+    // 1. Fuera lo que nunca distingue un equipo de otro.
+    s = s.replace(/\([^)]*\)/g, ' ');            // (Back Glass Only), (Low Battery 70-80%)...
+    s = s.replace(/\bA\d{4}\b/gi, ' ');           // A2650, A3084: el número de parte de Apple
+    s = s.replace(/\bGSM\b|\bUnlocked\b/gi, ' ');
+    s = s.replace(/\bPSIM\b/gi, ' ');
+    s = s.replace(/\bCPO\b|\bB2-?Stock\b|\bSubasta\b/gi, ' ');
+    s = s.replace(/\bLow\s+Battery\b/gi, ' ');
+    s = s.replace(/\bColor\b/gi, ' ');
+    s = s.replace(/[&.,]/g, ' ');
+    s = s.replace(/^\s*Apple\s+/i, ' ');
+    s = s.replace(/\biP\s+(?=\d)/i, 'iPhone ');   // "iP 14 Pro Max"
+    s = s.replace(/\s+/g, ' ').trim();
+
+    // 2. Capacidad, si el nombre la trae ("1T", "256GB", "1 TB").
+    var cap = '';
+    var mCap = s.match(/(\d+)\s*(TB|GB|T)\b/i);
+    if (mCap){
+      cap = mCap[1] + (mCap[2].toUpperCase() === 'GB' ? 'GB' : 'TB');
+      s = s.replace(mCap[0], ' ');
+    }
+
+    var palabras = s.replace(/\s+/g, ' ').trim().split(' ');
+    var low = palabras.map(function(p){ return p.toLowerCase(); });
+
+    // 3. La generación: el número que sigue a "iPhone" (o "SE 3", o "Air" a secas).
+    var iBase = -1, base = '';
+    for (var i = 0; i < low.length; i++){
+      if (low[i].indexOf('iphone') !== 0) continue;
+      var sig = low[i + 1] || '';
+      var mGen = sig.match(/^(\d{1,2})(e)?$/);
+      if (mGen){ base = 'iPhone ' + mGen[1] + (mGen[2] ? 'e' : ''); iBase = i + 1; break; }
+      if (sig === 'se'){
+        var num = (low[i + 2] || '').match(/^\d$/);
+        base = 'iPhone SE' + (num ? ' ' + low[i + 2] : ''); iBase = i + (num ? 2 : 1); break;
+      }
+      if (sig === 'air'){ base = 'iPhone Air'; iBase = i + 1; break; }
+    }
+    // Sin generación no hay nada que agrupar: se muestra el nombre limpio tal cual,
+    // así un "iPhone Pro Max" sin número queda a la vista para corregirlo en la hoja.
+    if (iBase < 0) return palabras.join(' ') + (cap ? ' ' + cap : '');
+
+    // 4. Solo los sufijos reales, y solo pegados al número: "16 Pro Max Black" corta en Black.
+    var partes = [];
+    for (var j = iBase + 1; j < low.length; j++){
+      var w = low[j].replace(/[^a-z]/g, '');
+      if (!SUFIJOS_MODELO[w]) break;
+      partes.push(w === 'max' ? 'Max' : w === 'mini' ? 'mini' : w.charAt(0).toUpperCase() + w.slice(1));
+    }
+    // "iPhone 17 Air" es el nombre corto "iPhone Air": mismo equipo, un solo renglón.
+    if (partes.length === 1 && partes[0] === 'Air') return 'iPhone Air' + (cap ? ' ' + cap : '');
+
+    return (base + (partes.length ? ' ' + partes.join(' ') : '') + (cap ? ' ' + cap : '')).trim();
+  }
+
   function modelosDe(lineas){
     var mapa = {};
     lineas.forEach(function(l){
       if (l.categoria && l.categoria !== 'equipo') return;
       if (!l.es_iphone) return;
-      var m = mapa[l.modelo] || (mapa[l.modelo] = {modelo:l.modelo, cantidad:0, total_venta:0, sm:0, n:0});
+      var nb = modeloBase(l.modelo);
+      var m = mapa[nb] || (mapa[nb] = {modelo:nb, cantidad:0, total_venta:0, sm:0, n:0});
       m.cantidad += Number(l.cantidad)||0;
       m.total_venta += Number(l.total_venta)||0;
       m.sm += Number(l.margen_linea_pct)||0;
@@ -1195,7 +1263,8 @@ img{max-width:100%}
       if (!l.es_iphone) return;
       var b = bucket(c);
       b.unidades += Number(l.cantidad)||0;
-      var m = b.modelos[l.modelo] || (b.modelos[l.modelo] = {modelo:l.modelo, cantidad:0, total_venta:0, sm:0, n:0});
+      var nb = modeloBase(l.modelo);
+      var m = b.modelos[nb] || (b.modelos[nb] = {modelo:nb, cantidad:0, total_venta:0, sm:0, n:0});
       m.cantidad += Number(l.cantidad)||0;
       m.total_venta += Number(l.total_venta)||0;
       m.sm += Number(l.margen_linea_pct)||0;
