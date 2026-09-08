@@ -291,6 +291,13 @@ img{max-width:100%}
 /* estados */
 .vacio{color:var(--lg-tenue);font-size:14.5px;margin:6px 0 0}
 .oculto{display:none !important}
+  .fila-falta{display:block;font-size:11px;color:var(--lg-tenue);margin-top:1px}
+  .cobertura{font-size:12px;line-height:1.5;color:var(--lg-tinta-2);background:rgba(0,0,0,.03);
+             border-radius:10px;padding:9px 12px;margin:0 0 14px}
+  .cobertura b{color:var(--lg-tinta)}
+  .cobertura i{font-style:normal;color:var(--lg-azul)}
+  .cobertura.ok{background:rgba(52,199,89,.10);color:var(--lg-verde)}
+
 </style>
 </head>
 <body>
@@ -440,6 +447,7 @@ img{max-width:100%}
         <section class="lg-panel">
           <h2 class="lg-h2">Modelos con más rotación</h2>
           <p class="lg-sub">Por unidades vendidas en el período. Solo iPhone.</p>
+          <p class="cobertura" id="coberturaModelos"></p>
           <div id="listaModelos"></div>
         </section>
         <section class="lg-panel">
@@ -806,8 +814,10 @@ img{max-width:100%}
     lineas.forEach(function(l){
       if (l.categoria && l.categoria !== 'equipo') return;
       if (!l.es_iphone) return;
-      var nb = partirModelo(l.modelo).etiqueta;
-      var m = mapa[nb] || (mapa[nb] = {modelo:nb, cantidad:0, total_venta:0, sm:0, n:0});
+      var pm = partirModelo(l.modelo);
+      var nb = pm.etiqueta;
+      var m = mapa[nb] || (mapa[nb] = {modelo:nb, cap:pm.cap, grado:pm.grado,
+                                        cantidad:0, total_venta:0, sm:0, n:0});
       m.cantidad += Number(l.cantidad)||0;
       m.total_venta += Number(l.total_venta)||0;
       m.sm += Number(l.margen_linea_pct)||0;
@@ -815,7 +825,8 @@ img{max-width:100%}
     });
     return Object.keys(mapa).map(function(k){
       var m = mapa[k];
-      return {modelo:m.modelo, cantidad:m.cantidad, total_venta:m.total_venta,
+      return {modelo:m.modelo, cap:m.cap, grado:m.grado,
+              cantidad:m.cantidad, total_venta:m.total_venta,
               margen_pct: m.n > 0 ? m.sm/m.n : 0};
     }).sort(function(a,b){ return b.cantidad - a.cantidad; });
   }
@@ -1062,6 +1073,30 @@ img{max-width:100%}
   }
 
   // ---------- render: listas tipo ranking ----------
+  /** Cuanto del periodo trae capacidad y grado. Mientras las ventas se carguen
+   *  a mano el numero va a ser bajo; verlo es lo que empuja a cargarlas bien. */
+  function pintarCoberturaModelos(mods){
+    var el = $('coberturaModelos');
+    if (!el) return;
+    var total = 0, completas = 0;
+    mods.forEach(function(m){
+      total += m.cantidad;
+      if (m.cap && m.grado) completas += m.cantidad;
+    });
+    if (!total){ el.textContent = ''; el.className = 'cobertura'; return; }
+    var pct = (completas / total) * 100;
+    if (completas === total){
+      el.className = 'cobertura ok';
+      el.textContent = 'Todas las unidades del período tienen capacidad y grado.';
+      return;
+    }
+    el.className = 'cobertura';
+    el.innerHTML = '<b>' + fmtNum(total - completas) + ' de ' + fmtNum(total) + ' unidades</b> ' +
+      'se cargaron sin capacidad ni grado (' + fmtPct(100 - pct) + '). ' +
+      'Ese dato no está en la hoja de ventas y no se puede reconstruir: aparece solo en las ' +
+      'ventas que se carguen con el modelo completo, por ejemplo <i>iPhone 16 Pro Max 256GB grado A-</i>.';
+  }
+
   function pintarRanking(contenedorId, items, opts){
     var el = $(contenedorId);
     if (!items || !items.length){
@@ -1077,6 +1112,7 @@ img{max-width:100%}
       return '<div class="fila">' +
         '<div class="fila-idx">' + (i+1) + '</div>' +
         '<div class="fila-nom"><b>' + esc(opts.nombre(it)) + '</b>' +
+          (opts.nota && opts.nota(it) ? '<span class="fila-falta">' + esc(opts.nota(it)) + '</span>' : '') +
           '<div class="barra"><i style="width:' + pct + '%"></i></div></div>' +
         '<div class="fila-cifras"><div class="v">' + esc(opts.principal(it)) + '</div>' +
           '<div class="m">' + esc(opts.secundario(it)) + '</div></div>' +
@@ -1385,9 +1421,17 @@ img{max-width:100%}
     pintarRanking('listaModelos', modelosDe(d.lineas), {
       valor: function(m){ return m.cantidad; },
       nombre: function(m){ return m.modelo; },
+      // Sin capacidad ni grado el renglon parece un modelo suelto; conviene decir
+      // que el dato falta en la hoja, no que el equipo no los tenga.
+      nota: function(m){
+        if (m.cap && m.grado) return '';
+        if (!m.cap && !m.grado) return 'sin capacidad ni grado';
+        return m.cap ? 'sin grado' : 'sin capacidad';
+      },
       principal: function(m){ return fmtNum(m.cantidad) + ' u.'; },
       secundario: function(m){ return fmtMoney(m.total_venta) + ' · ' + fmtPct(m.margen_pct); }
     });
+    pintarCoberturaModelos(modelosDe(d.lineas));
     pintarRanking('listaClientes', clientesDe(d.ordenes), {
       valor: function(c){ return c.venta_total_hoja; },
       nombre: function(c){ return c.cliente; },
