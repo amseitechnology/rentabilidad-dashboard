@@ -273,6 +273,23 @@ img{max-width:100%}
 .echart--mix{height:380px}
 @media (max-width:560px){.echart{height:260px}.echart--mix{height:320px}}
 
+/* ---- candado: sin clave no hay dato ---- */
+.candado{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;
+         background:linear-gradient(135deg,var(--lg-a1),var(--lg-a2) 45%,var(--lg-a3) 75%,var(--lg-a4))}
+.candado.oculto{display:none}
+.candado-caja{width:min(420px,100%);padding:30px 28px 26px;border-radius:var(--lg-radio);background:var(--lg-vidrio);
+              backdrop-filter:var(--lg-blur);-webkit-backdrop-filter:var(--lg-blur);box-shadow:var(--lg-sombra)}
+.candado-caja .mark{margin-bottom:18px}
+.candado-caja h1{font-size:22px;letter-spacing:-.03em;margin:0 0 4px}
+.candado-caja p{margin:0 0 20px;font-size:14px;color:var(--lg-tinta-2);line-height:1.5}
+.candado-caja label{display:block;font-size:12px;font-weight:600;color:var(--lg-tenue);letter-spacing:.04em;text-transform:uppercase;margin-bottom:7px}
+.candado-caja input{width:100%;box-sizing:border-box;font:inherit;font-size:17px;letter-spacing:.06em;padding:12px 14px;border-radius:14px;
+                    border:1px solid var(--lg-borde);background:rgba(255,255,255,.75);color:var(--lg-tinta);outline:none}
+.candado-caja input:focus{border-color:var(--lg-azul);box-shadow:0 0 0 4px rgba(0,113,227,.15)}
+.candado-caja .lg-btn{width:100%;margin-top:14px;justify-content:center}
+.candado-error{min-height:20px;margin:12px 0 0!important;font-size:13px!important;color:var(--lg-coral)!important;font-weight:600}
+.is-bloqueado > *:not(.candado):not(.lg-aurora){visibility:hidden}
+
 /* ---- carga: esqueleto hasta que llega el dato ---- */
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .is-cargando .kpi-valor,.is-cargando .casc .v,.is-cargando .fila-cifras .v{
@@ -382,6 +399,17 @@ img{max-width:100%}
 </style>
 </head>
 <body class="is-cargando">
+<div class="candado oculto" id="candado" role="dialog" aria-modal="true" aria-labelledby="candadoTitulo">
+  <form class="candado-caja" id="candadoForm" autocomplete="off">
+    <div class="mark" aria-hidden="true"><svg viewBox="0 0 100 100" width="30" height="30"><rect width="100" height="100" rx="24" fill="#0b0f16"/><g fill="none" stroke="#e6ab3f" stroke-width="6.5" stroke-linejoin="round"><path d="M26 22 L48 50 L26 78 L4 50 Z"/><path d="M50 22 L72 50 L50 78 L28 50 Z"/><path d="M74 22 L96 50 L74 78 L52 50 Z"/></g></svg></div>
+    <h1 id="candadoTitulo">Panel de rentabilidad</h1>
+    <p>Este panel es privado. Escribí la clave de acceso para ver los datos.</p>
+    <label for="candadoClave">Clave de acceso</label>
+    <input type="password" id="candadoClave" inputmode="text" autocapitalize="characters" spellcheck="false" autocomplete="current-password" required>
+    <button class="lg-btn" type="submit" id="candadoBtn">Entrar</button>
+    <p class="candado-error" id="candadoError"></p>
+  </form>
+</div>
 
 <!-- El fondo va primero y es obligatorio: sin color detras, el vidrio no se ve -->
 <div class="lg-aurora" aria-hidden="true">
@@ -629,7 +657,7 @@ img{max-width:100%}
     <footer style="text-align:center;margin-top:34px;color:var(--lg-tenue);font-size:13px;line-height:1.8">
       <b style="color:var(--lg-tinta-2)">Amsei Technology</b> — datos en vivo desde Ventas Amsei 2026<br>
       Última actualización: <span id="pieActualizado">—</span> ·
-      <a href="https://docs.google.com/spreadsheets/d/1ssvcLGRBDipc7Y9BpJPB5GwyI0awjsFr6MAktq-ZgV4" target="_blank" rel="noopener" style="color:var(--lg-azul)">ver hoja de origen</a>
+      <a href="https://docs.google.com/spreadsheets/d/1ssvcLGRBDipc7Y9BpJPB5GwyI0awjsFr6MAktq-ZgV4" target="_blank" rel="noopener" style="color:var(--lg-azul)">ver hoja de origen</a> · <a href="#" id="salir" style="color:var(--lg-tenue)">cerrar sesión</a>
     </footer>
 
   </div>
@@ -658,6 +686,8 @@ img{max-width:100%}
   var PEND_ABIERTO = false;
   var CHART = null, MIX = null;
   var ULTIMA_CARGA = 0;
+  var TOKEN = null;
+  try { TOKEN = localStorage.getItem('amsei-token'); } catch(e){}
 
   // ---------- helpers ----------
   function $(id){ return document.getElementById(id); }
@@ -1941,10 +1971,41 @@ img{max-width:100%}
   });
 
   // ---------- carga ----------
+  // ---------- acceso ----------
+  /* La clave que se escribe acá es el mismo token que exige el endpoint. El HTML es público
+     y no guarda ningún secreto: sin la clave, el API no devuelve datos y no hay nada que ver. */
+  function mostrarCandado(msg){
+    document.body.classList.add('is-bloqueado');
+    $('candado').classList.remove('oculto');
+    $('candadoError').textContent = msg || '';
+    $('candadoBtn').disabled = false;
+    setTimeout(function(){ $('candadoClave').focus(); }, 60);
+  }
+  function ocultarCandado(){
+    document.body.classList.remove('is-bloqueado');
+    $('candado').classList.add('oculto');
+  }
+  function borrarAcceso(){
+    TOKEN = null; PAYLOAD = null;
+    try { localStorage.removeItem('amsei-token'); localStorage.removeItem('amsei-cache'); } catch(e){}
+  }
+
   function cargar(){
-    fetch(API_URL, {cache:'no-store'})
+    if (!TOKEN){
+      document.body.classList.remove('is-cargando');
+      mostrarCandado('');
+      return;
+    }
+    fetch(API_URL + '?token=' + encodeURIComponent(TOKEN), {cache:'no-store'})
       .then(function(res){ if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
       .then(function(payload){
+        if (payload && payload.error === 'no_autorizado'){
+          borrarAcceso();
+          document.body.classList.remove('is-cargando');
+          mostrarCandado('Clave incorrecta. Revisala y probá de nuevo.');
+          return;
+        }
+        ocultarCandado();
         PAYLOAD = payload;
         ULTIMA_CARGA = Date.now();
         $('avisoError').classList.add('oculto');
@@ -1954,9 +2015,10 @@ img{max-width:100%}
       .catch(function(err){
         console.error('Error cargando el API de AMSEI:', err);
         $('avisoError').classList.remove('oculto');
+        $('candadoBtn').disabled = false;
         try {
           var cache = localStorage.getItem('amsei-cache');
-          if (cache && !PAYLOAD){ PAYLOAD = JSON.parse(cache); pintarTodo(); }
+          if (cache && !PAYLOAD){ ocultarCandado(); PAYLOAD = JSON.parse(cache); pintarTodo(); }
         } catch(e){}
       });
   }
@@ -1985,6 +2047,20 @@ img{max-width:100%}
   if ('serviceWorker' in navigator && location.protocol === 'https:'){
     navigator.serviceWorker.register('sw.js').catch(function(){});
   }
+
+  $('candadoForm').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var t = $('candadoClave').value.trim().toUpperCase();
+    if (!t) return;
+    TOKEN = t;
+    try { localStorage.setItem('amsei-token', t); } catch(e){}
+    $('candadoError').textContent = '';
+    $('candadoBtn').disabled = true;
+    $('candadoClave').value = '';
+    cargar();
+  });
+  var salir = $('salir');
+  if (salir) salir.addEventListener('click', function(ev){ ev.preventDefault(); borrarAcceso(); location.reload(); });
 
   cargar();
   setInterval(cargar, REFRESH_MS);
