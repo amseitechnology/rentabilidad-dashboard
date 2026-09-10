@@ -1,7 +1,7 @@
 /* Amsei — service worker.
    La cáscara de la app se sirve desde caché (abre al instante, incluso sin red).
    El dato del API va siempre a la red primero y cae a la última copia si no hay conexión. */
-var CACHE = 'amsei-v1';
+var CACHE = 'amsei-v2';
 var CASCARA = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', function(e){
@@ -17,14 +17,14 @@ self.addEventListener('fetch', function(e){
   if (e.request.method !== 'GET') return;
   if (url.indexOf('script.google') >= 0 || url.indexOf('googleusercontent') >= 0){
     e.respondWith(fetch(e.request).then(function(r){
-      var copia = r.clone(); caches.open(CACHE).then(function(c){ c.put(e.request, copia); }); return r;
+      var copia = r.clone(); caches.open(CACHE).then(function(c){ return c.put(e.request.url, copia); }).catch(function(){}); return r;
     }).catch(function(){ return caches.match(e.request); }));
     return;
   }
   if (url.indexOf(self.location.origin) !== 0) return;   // el CDN lo maneja el navegador
   e.respondWith(caches.match(e.request).then(function(hit){
     var red = fetch(e.request).then(function(r){
-      if (r && r.ok){ var copia = r.clone(); caches.open(CACHE).then(function(c){ c.put(e.request, copia); }); }
+      if (r && r.ok){ var copia = r.clone(); caches.open(CACHE).then(function(c){ return c.put(e.request.url, copia); }).catch(function(){}); }
       return r;
     }).catch(function(){ return hit; });
     return hit || red;
