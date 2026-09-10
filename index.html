@@ -2,7 +2,13 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fbfcfd">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Amsei">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>Amsei Technology — Panel de rentabilidad</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%230b0f16'/%3E%3Cg fill='none' stroke='%23e6ab3f' stroke-width='6.5' stroke-linejoin='round'%3E%3Cpath d='M26 22 L48 50 L26 78 L4 50 Z'/%3E%3Cpath d='M50 22 L72 50 L50 78 L28 50 Z'/%3E%3Cpath d='M74 22 L96 50 L74 78 L52 50 Z'/%3E%3C/g%3E%3C/svg%3E">
 <style>
@@ -202,6 +208,81 @@ img{max-width:100%}
 .kpi-valor.coral{color:var(--lg-coral)}
 .kpi-pie{font-size:13.5px;color:var(--lg-tinta-2);margin:9px 0 0}
 .kpi-pie b{font-weight:650;color:var(--lg-tinta)}
+
+/* ---- hero de KPIs: una cifra manda, tres la acompañan ---- */
+.kpi-hero{display:grid;grid-template-columns:1.4fr repeat(3,minmax(0,1fr));gap:14px}
+/* Cifras fluidas: "$3.731.457,6" a 34px no entra en una tarjeta de 200px, y la utilidad
+   principal va a tener siete dígitos antes de fin de año. */
+.kpi-hero .kpi-valor{font-size:clamp(20px,1.9vw,29px);white-space:nowrap}
+.kpi-principal .kpi-valor{font-size:clamp(32px,3.1vw,46px)}
+.kpi-principal{background:rgba(255,255,255,.82)}
+.spark{display:block;width:100%;height:38px;margin-top:12px;overflow:visible}
+.spark path.area{fill:rgba(0,113,227,.10)}
+.spark path.linea{fill:none;stroke:var(--lg-azul);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.spark circle{fill:var(--lg-azul)}
+.kpi-principal .spark path.area{fill:rgba(47,145,132,.12)}
+.kpi-principal .spark path.linea{stroke:var(--lg-verde)}
+.kpi-principal .spark circle{fill:var(--lg-verde)}
+.spark.es-rojo path.area{fill:rgba(194,112,108,.12)}
+.spark.es-rojo path.linea{stroke:var(--lg-coral)}
+.spark.es-rojo circle{fill:var(--lg-coral)}
+.delta{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:650;margin-top:6px;
+       font-variant-numeric:tabular-nums;color:var(--lg-tinta-2)}
+.delta.sube{color:var(--lg-verde)}
+.delta.baja{color:var(--lg-coral)}
+.delta small{font-weight:500;color:var(--lg-tenue)}
+@media (max-width:1060px){.kpi-hero{grid-template-columns:1fr 1fr}.kpi-principal{grid-column:1/-1}}
+@media (max-width:560px){.kpi-hero{grid-template-columns:1fr}.kpi-hero .kpi-valor{font-size:32px}.kpi-principal .kpi-valor{font-size:42px}}
+
+/* ---- alertas: el panel habla antes de que preguntes ---- */
+.alertas{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px;min-height:1px}
+.alerta{display:inline-flex;align-items:center;gap:8px;padding:8px 13px 8px 10px;border-radius:999px;
+        font-size:13px;font-weight:550;color:var(--lg-tinta);background:var(--lg-vidrio);
+        border:1px solid var(--lg-borde);box-shadow:inset 0 1px 0 var(--lg-brillo);cursor:default;
+        line-height:1.25;font-family:inherit}
+.alerta i{width:8px;height:8px;border-radius:50%;background:var(--lg-tinta-2);flex-shrink:0}
+.alerta.ok i{background:var(--lg-verde)}
+.alerta.atencion i{background:var(--lg-azul);box-shadow:0 0 0 3px rgba(0,113,227,.18)}
+.alerta.grave i{background:var(--lg-coral)}
+.alerta b{font-weight:700}
+.alerta[data-accion]{cursor:pointer}
+.alerta[data-accion]:hover{background:rgba(255,255,255,.9)}
+.alerta.is-open{background:rgba(0,113,227,.10);border-color:rgba(0,113,227,.25)}
+
+/* ---- cascada: de lo facturado a lo que queda ---- */
+.cascada{display:flex;flex-direction:column}
+.casc{display:grid;grid-template-columns:minmax(150px,1.1fr) 3fr auto;align-items:center;gap:16px;
+      padding:11px 0;border-top:1px solid var(--lg-borde)}
+.casc:first-child{border-top:0}
+.casc .n{font-size:14px;font-weight:600}
+.casc .n small{display:block;font-size:12px;font-weight:500;color:var(--lg-tenue);margin-top:1px}
+.casc .b{height:8px;border-radius:5px;background:rgba(12,20,40,.06);overflow:hidden}
+.casc .b i{display:block;height:100%;border-radius:5px;background:var(--lg-azul);opacity:.8;
+           transition:width .6s cubic-bezier(.2,.7,.2,1)}
+.casc.final .b i{background:var(--lg-verde);opacity:1}
+.casc.final.rojo .b i{background:var(--lg-coral)}
+.casc .v{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums;text-align:right;min-width:98px}
+.casc.resta .v{color:var(--lg-tinta-2);font-weight:550}
+.casc.resta .n{color:var(--lg-tinta-2);font-weight:550;padding-left:14px}
+.casc.final .v{color:var(--lg-verde);font-size:18px}
+.casc.final.rojo .v{color:var(--lg-coral)}
+@media (max-width:560px){.casc{grid-template-columns:1fr auto}.casc .b{display:none}}
+
+/* ---- gráficos ECharts ---- */
+.echart{width:100%;height:320px}
+.echart--mix{height:380px}
+@media (max-width:560px){.echart{height:260px}.echart--mix{height:320px}}
+
+/* ---- carga: esqueleto hasta que llega el dato ---- */
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.is-cargando .kpi-valor,.is-cargando .casc .v,.is-cargando .fila-cifras .v{
+  color:transparent!important;border-radius:8px;
+  background:linear-gradient(90deg,rgba(12,20,40,.05),rgba(12,20,40,.10),rgba(12,20,40,.05));
+  background-size:200% 100%;animation:shimmer 1.3s linear infinite}
+@media (prefers-reduced-motion:reduce){
+  .is-cargando .kpi-valor{animation:none}
+  .casc .b i{transition:none}
+}
 .mini-label{font-size:12.5px;color:var(--lg-tenue);margin:0}
 .mini-valor{font-size:21px;font-weight:700;letter-spacing:-.025em;margin:6px 0 0;
   font-variant-numeric:tabular-nums}
@@ -300,7 +381,7 @@ img{max-width:100%}
 
 </style>
 </head>
-<body>
+<body class="is-cargando">
 
 <!-- El fondo va primero y es obligatorio: sin color detras, el vidrio no se ve -->
 <div class="lg-aurora" aria-hidden="true">
@@ -349,6 +430,7 @@ img{max-width:100%}
       No tomes decisiones con estos números hasta que vuelva la conexión.</p>
     </div>
 
+    <div class="alertas" id="alertas"></div>
     <div class="lg-claves oculto" id="avisoPendientes">
       <h4>Órdenes sin factura de compra</h4>
       <div id="pendientesCuerpo"></div>
@@ -380,26 +462,34 @@ img{max-width:100%}
     <div id="vistaResumen">
 
       <section class="lg-panel">
-        <div class="lg-grid">
+        <div class="kpi-hero">
+          <div class="lg-tarjeta kpi-principal">
+            <p class="kpi-label">Utilidad final</p>
+            <p class="kpi-valor verde" id="kUtilidad">—</p>
+            <p class="kpi-pie">Después de <b id="kGastosFijos">—</b> de gastos fijos</p>
+            <svg class="spark" id="spkUtilidad" viewBox="0 0 200 38" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <span class="delta" id="dUtilidad"></span>
+          </div>
           <div class="lg-tarjeta">
             <p class="kpi-label">Facturación del período</p>
             <p class="kpi-valor" id="kFacturado">—</p>
-            <p class="kpi-pie"><span id="kOrdenesTxt">—</span> · ticket prom. <b id="kTicket">—</b></p>
+            <p class="kpi-pie"><span id="kOrdenesTxt">—</span> · ticket <b id="kTicket">—</b></p>
+            <svg class="spark" id="spkFacturado" viewBox="0 0 200 38" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <span class="delta" id="dFacturado"></span>
           </div>
           <div class="lg-tarjeta">
             <p class="kpi-label">Ganancia neta real</p>
             <p class="kpi-valor azul" id="kGananciaTotal">—</p>
             <p class="kpi-pie">Margen neto <b id="kMargenNeto">—</b> · bruto <b id="kMargenBruto">—</b></p>
-          </div>
-          <div class="lg-tarjeta">
-            <p class="kpi-label">Utilidad final</p>
-            <p class="kpi-valor verde" id="kUtilidad">—</p>
-            <p class="kpi-pie">Después de <b id="kGastosFijos">—</b> de gastos fijos</p>
+            <svg class="spark" id="spkGanancia" viewBox="0 0 200 38" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <span class="delta" id="dGanancia"></span>
           </div>
           <div class="lg-tarjeta">
             <p class="kpi-label">Unidades iPhone</p>
             <p class="kpi-valor" id="kUnidades">—</p>
             <p class="kpi-pie">en <b id="kOrdenes2">—</b> órdenes despachadas</p>
+            <svg class="spark" id="spkUnidades" viewBox="0 0 200 38" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <span class="delta" id="dUnidades"></span>
           </div>
         </div>
       </section>
@@ -418,29 +508,28 @@ img{max-width:100%}
           </div>
         </div>
         <div class="graf-stats" id="grafStats"></div>
-        <div class="grafico-wrap">
-          <svg class="chart-svg" id="grafSvg" viewBox="0 0 820 300"></svg>
-          <div class="tip" id="grafTip"></div>
-        </div>
-        <div class="ejes" id="grafEjes"></div>
-        <div class="graf-leyenda" id="grafLeyenda"></div>
+        <div class="echart" id="grafEcharts"></div>
       </section>
 
       <section class="lg-panel">
         <h2 class="lg-h2">Desglose del período</h2>
-        <p class="lg-sub">De la facturación a lo que queda limpio, ya descontados los gastos fijos del mes.</p>
-        <div class="lg-grid">
-          <div class="lg-tarjeta"><p class="mini-label">Ganancia bruta</p><p class="mini-valor" id="mGananciaBruta">—</p></div>
-          <div class="lg-tarjeta"><p class="mini-label">Ganancia 2 (− gastos)</p><p class="mini-valor" id="mGanancia2">—</p></div>
-          <div class="lg-tarjeta"><p class="mini-label">Ganancia total (− comisión)</p><p class="mini-valor azul" id="mGananciaTotal">—</p></div>
-          <div class="lg-tarjeta"><p class="mini-label">Gastos fijos del período</p><p class="mini-valor coral" id="mGastosFijos">—</p></div>
-          <div class="lg-tarjeta"><p class="mini-label">Utilidad final</p><p class="mini-valor verde" id="mUtilidad">—</p></div>
-          <div class="lg-tarjeta"><p class="mini-label">Ticket promedio</p><p class="mini-valor" id="mTicket">—</p></div>
-          <div class="lg-tarjeta"><p class="mini-label">Gastos</p><p class="mini-valor" id="mGastos">—</p></div>
-          <div class="lg-tarjeta"><p class="mini-label">Envío</p><p class="mini-valor" id="mEnvio">—</p></div>
-          <div class="lg-tarjeta"><p class="mini-label">Comisiones</p><p class="mini-valor" id="mComisiones">—</p></div>
-          <div class="lg-tarjeta"><p class="mini-label">Órdenes</p><p class="mini-valor" id="mOrdenes">—</p></div>
+        <p class="lg-sub">De la facturación a lo que queda limpio. Cada barra es la parte de la ganancia bruta que sobrevive.</p>
+        <div class="cascada" id="cascada"></div>
+        <p class="lg-sub" style="margin:14px 0 0" id="cascadaPie"></p>
+      </section>
+
+      <section class="lg-panel">
+        <div class="grafico-cab">
+          <div>
+            <h2 class="lg-h2">Mix de modelos</h2>
+            <p class="lg-sub" style="margin:0" id="mixSub">Área = unidades vendidas en el período · más oscuro = más margen.</p>
+          </div>
+          <div class="sub-tabs" id="subTabsMix">
+            <button class="sub-tab is-active" type="button" data-mix="mapa">Mapa</button>
+            <button class="sub-tab" type="button" data-mix="posiciones">Posiciones</button>
+          </div>
         </div>
+        <div class="echart echart--mix" id="mixEcharts"></div>
       </section>
 
       <div class="dos-paneles">
@@ -546,6 +635,7 @@ img{max-width:100%}
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.6.0/echarts.min.js"></script>
 <script>
 (function(){
   'use strict';
@@ -564,6 +654,10 @@ img{max-width:100%}
   var VISTA = 'resumen';
   var COMP_TAB = 'semanas';
   var CLIENTE_SEL = null;
+  var MIX_TAB = 'mapa';
+  var PEND_ABIERTO = false;
+  var CHART = null, MIX = null;
+  var ULTIMA_CARGA = 0;
 
   // ---------- helpers ----------
   function $(id){ return document.getElementById(id); }
@@ -846,33 +940,223 @@ img{max-width:100%}
   }
 
   // ---------- render: KPIs ----------
+  /** Sube el número desde el valor anterior en ~600 ms. Con "reducir movimiento" lo escribe directo. */
+  var SIN_MOVIMIENTO = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function animarNumero(el, valor, fmt){
+    var prev = el.getAttribute('data-v');
+    var desde = prev === null ? 0 : Number(prev);
+    el.setAttribute('data-v', valor);
+    // Con la pestaña oculta requestAnimationFrame no corre: se escribe directo o el número queda en "—".
+    if (SIN_MOVIMIENTO || document.hidden || isNaN(desde) || desde === valor){ el.textContent = fmt(valor); return; }
+    var t0 = null, dur = 600, listo = false;
+    function paso(t){
+      if (listo) return;
+      if (!t0) t0 = t;
+      var p = Math.min(1, (t - t0) / dur);
+      var e = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmt(desde + (valor - desde) * e);
+      if (p < 1) requestAnimationFrame(paso); else { listo = true; el.textContent = fmt(valor); }
+    }
+    requestAnimationFrame(paso);
+    setTimeout(function(){ if (!listo){ listo = true; el.textContent = fmt(valor); } }, dur + 120);
+  }
+
+  /** Serie diaria de los últimos N días terminando hoy, con ceros donde no hubo venta. */
+  function serieDiaria(nDias, offsetDias){
+    var O = (PAYLOAD && PAYLOAD.ordenes_raw) || [];
+    var L = (PAYLOAD && PAYLOAD.lineas_raw) || [];
+    var g = (PAYLOAD && PAYLOAD.gastos && PAYLOAD.gastos.por_mes) || {};
+    var hoy = new Date(); hoy.setHours(0,0,0,0);
+    var fin = new Date(hoy); fin.setDate(fin.getDate() - (offsetDias || 0));
+    var ini = new Date(fin); ini.setDate(ini.getDate() - nDias + 1);
+    var kIni = diaKey(ini), kFin = diaKey(fin);
+    var f = {}, ga = {}, u = {};
+    O.forEach(function(o){ var k = o.dia_key; if (k < kIni || k > kFin) return;
+      f[k] = (f[k]||0) + (Number(o.venta_total_hoja)||0); ga[k] = (ga[k]||0) + (Number(o.ganancia_total)||0); });
+    L.forEach(function(l){ var k = l.dia_key; if (!l.es_iphone || k < kIni || k > kFin) return;
+      u[k] = (u[k]||0) + (Number(l.cantidad)||0); });
+    var out = {facturado:[], ganancia:[], unidades:[], utilidad:[], desde:kIni, hasta:kFin};
+    var d = new Date(ini);
+    while (d <= fin){
+      var k = diaKey(d);
+      var gastoMes = Number(g[d.getFullYear() + '-' + pad2(d.getMonth()+1)]) || 0;
+      var diasMes = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+      out.facturado.push(f[k]||0); out.ganancia.push(ga[k]||0); out.unidades.push(u[k]||0);
+      out.utilidad.push((ga[k]||0) - gastoMes / diasMes);
+      d.setDate(d.getDate() + 1);
+    }
+    return out;
+  }
+
+  /** Dibuja una mini-línea en un <svg viewBox="0 0 200 38">. */
+  function sparkline(id, vals, acumular){
+    var svg = $(id); if (!svg) return;
+    if (acumular){ var acc = 0; vals = vals.map(function(v){ acc += v; return acc; }); }
+    var n = vals.length; if (n < 2){ svg.innerHTML = ''; return; }
+    var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    if (max === min){ max = min + 1; }
+    var W = 200, H = 38, pad = 3;
+    var x = function(i){ return pad + (i/(n-1)) * (W - 2*pad); };
+    var y = function(v){ return H - pad - ((v - min)/(max - min)) * (H - 2*pad); };
+    var pts = vals.map(function(v,i){ return x(i).toFixed(1) + ',' + y(v).toFixed(1); });
+    var linea = 'M' + pts.join(' L');
+    var area = linea + ' L' + x(n-1).toFixed(1) + ',' + (H-pad) + ' L' + x(0).toFixed(1) + ',' + (H-pad) + ' Z';
+    svg.classList.toggle('es-rojo', vals[n-1] < 0);
+    svg.innerHTML = '<path class="area" d="' + area + '"/><path class="linea" d="' + linea + '"/>' +
+      '<circle cx="' + x(n-1).toFixed(1) + '" cy="' + y(vals[n-1]).toFixed(1) + '" r="3"/>';
+  }
+
+  function delta(id, ahora, antes, esDinero){
+    var el = $(id); if (!el) return;
+    if (!antes){ el.textContent = ''; el.className = 'delta'; return; }
+    var p = (ahora - antes) / Math.abs(antes) * 100;
+    var signo = p > 0 ? '+' : '';
+    el.className = 'delta ' + (p > 1 ? 'sube' : p < -1 ? 'baja' : '');
+    el.innerHTML = signo + (Math.round(p*10)/10).toLocaleString('es-AR') + '% <small>· 30 días vs los 30 previos</small>';
+  }
+
+  function pintarSparklines(){
+    var a = serieDiaria(30, 0), b = serieDiaria(30, 30);
+    var suma = function(arr){ return arr.reduce(function(s,v){ return s+v; }, 0); };
+    sparkline('spkUtilidad', a.utilidad, true);
+    sparkline('spkFacturado', a.facturado, true);
+    sparkline('spkGanancia', a.ganancia, true);
+    sparkline('spkUnidades', a.unidades, true);
+    delta('dUtilidad', suma(a.utilidad), suma(b.utilidad));
+    delta('dFacturado', suma(a.facturado), suma(b.facturado));
+    delta('dGanancia', suma(a.ganancia), suma(b.ganancia));
+    delta('dUnidades', suma(a.unidades), suma(b.unidades));
+  }
+
   function pintarKpis(k, gastoFijo){
     var utilidad = k.ganancia_total - (gastoFijo || 0);
     var enRojo = utilidad < 0;   // una utilidad negativa no puede verse verde
-    $('kUtilidad').textContent = fmtMoney(utilidad);
     $('kUtilidad').className = 'kpi-valor ' + (enRojo ? 'coral' : 'verde');
+    animarNumero($('kUtilidad'), utilidad, fmtMoney);
     $('kGastosFijos').textContent = fmtMoney(gastoFijo || 0);
-    $('mGastosFijos').textContent = fmtMoney(gastoFijo || 0);
-    $('mUtilidad').textContent = fmtMoney(utilidad);
-    $('mUtilidad').className = 'mini-valor ' + (enRojo ? 'coral' : 'verde');
 
-    $('kFacturado').textContent = fmtMoney(k.facturado);
+    animarNumero($('kFacturado'), k.facturado, fmtMoney);
     $('kOrdenesTxt').textContent = fmtNum(k.ordenes) + (k.ordenes === 1 ? ' orden' : ' órdenes');
     $('kTicket').textContent = fmtMoney(k.ticket_promedio);
-    $('kGananciaTotal').textContent = fmtMoney(k.ganancia_total);
+    animarNumero($('kGananciaTotal'), k.ganancia_total, fmtMoney);
     $('kMargenNeto').textContent = fmtPct(k.margen_neto_pct);
     $('kMargenBruto').textContent = fmtPct(k.margen_bruto_pct);
-    $('kUnidades').textContent = fmtNum(k.unidades);
+    animarNumero($('kUnidades'), k.unidades, fmtNum);
     $('kOrdenes2').textContent = fmtNum(k.ordenes);
 
-    $('mGananciaBruta').textContent = fmtMoney(k.ganancia_bruta);
-    $('mGanancia2').textContent = fmtMoney(k.ganancia_2);
-    $('mGananciaTotal').textContent = fmtMoney(k.ganancia_total);
-    $('mTicket').textContent = fmtMoney(k.ticket_promedio);
-    $('mGastos').textContent = fmtMoney(k.gastos);
-    $('mEnvio').textContent = fmtMoney(k.envio);
-    $('mComisiones').textContent = fmtMoney(k.comisiones);
-    $('mOrdenes').textContent = fmtNum(k.ordenes);
+    // Cascada: cada resta es la diferencia entre dos niveles, así siempre cuadra.
+    var bruta = k.ganancia_bruta, g2 = k.ganancia_2, neta = k.ganancia_total;
+    var base = bruta > 0 ? bruta : 1;
+    var w = function(v){ return Math.max(0, Math.min(100, v / base * 100)).toFixed(1); };
+    var filas = [
+      {n:'Ganancia bruta', s:'sobre ' + fmtMoney(k.facturado) + ' facturado · ' + fmtPct(k.margen_bruto_pct), v:bruta, b:100},
+      {n:'Gastos de orden y envío', v:-(bruta - g2), resta:true},
+      {n:'Ganancia 2', v:g2, b:w(g2)},
+      {n:'Comisiones', v:-(g2 - neta), resta:true},
+      {n:'Ganancia neta real', s:'margen neto ' + fmtPct(k.margen_neto_pct), v:neta, b:w(neta)},
+      {n:'Gastos fijos del período', s:'prorrateados por día', v:-(gastoFijo||0), resta:true},
+      {n:'Utilidad final', s:'lo que queda limpio', v:utilidad, b:w(utilidad), final:true}
+    ];
+    $('cascada').innerHTML = filas.map(function(f){
+      var cls = 'casc' + (f.resta ? ' resta' : '') + (f.final ? ' final' + (utilidad < 0 ? ' rojo' : '') : '');
+      return '<div class="' + cls + '"><div class="n">' + esc(f.n) + (f.s ? '<small>' + esc(f.s) + '</small>' : '') + '</div>' +
+        (f.resta ? '<div></div>' : '<div class="b"><i style="width:' + f.b + '%"></i></div>') +
+        '<div class="v">' + (f.resta ? '− ' + fmtMoney(Math.abs(f.v)) : fmtMoney(f.v)) + '</div></div>';
+    }).join('');
+    $('cascadaPie').textContent = fmtNum(k.ordenes) + ' órdenes · ticket promedio ' + fmtMoney(k.ticket_promedio) +
+      ' · comisiones ' + fmtMoney(k.comisiones) + ' · envío ' + fmtMoney(k.envio) + ' · gastos de orden ' + fmtMoney(k.gastos);
+
+    pintarSparklines();
+  }
+
+  // ---------- alertas: reglas fijas sobre el dato, sin magia ----------
+  function pintarAlertas(){
+    var box = $('alertas'); if (!box || !PAYLOAD) return;
+    var O = PAYLOAD.ordenes_raw || [], L = PAYLOAD.lineas_raw || [];
+    var hoy = new Date(); hoy.setHours(0,0,0,0);
+    var chips = [];
+
+    // 1. Órdenes sin factura de compra (antes era un banner que tapaba los números).
+    var pend = PAYLOAD.ordenes_pendientes || [];
+    if (pend.length){
+      var monto = pend.reduce(function(s,o){ return s + (Number(o.venta_total_hoja)||0); }, 0);
+      chips.push({cls:'atencion' + (PEND_ABIERTO ? ' is-open' : ''), accion:'pendientes',
+        txt:'<b>' + pend.length + (pend.length === 1 ? ' orden' : ' órdenes') + '</b> sin factura de compra · ' + fmtMoney(monto) + ' fuera del panel'});
+    }
+
+    // 2. Órdenes contadas sin fecha: no entran al gráfico ni a los filtros.
+    var sinFecha = O.filter(function(o){ return !/^\d{4}-\d{2}-\d{2}$/.test(String(o.dia_key||'')); });
+    if (sinFecha.length){
+      chips.push({cls:'grave', txt:'<b>' + sinFecha.length + (sinFecha.length === 1 ? ' orden' : ' órdenes') + ' sin fecha</b> en la hoja (' +
+        sinFecha.slice(0,3).map(function(o){ return esc(o.orden); }).join(', ') + '): fuera del gráfico y de los filtros'});
+    }
+
+    // 3. Margen del mes en curso contra el promedio de los meses cerrados.
+    var men = PAYLOAD.mensual || [];
+    var claveHoy = hoy.getFullYear() + '-' + pad2(hoy.getMonth()+1);
+    var cerrados = men.filter(function(m){ return m.clave < claveHoy && m.venta_total_hoja > 0; });
+    var actual = men.filter(function(m){ return m.clave === claveHoy; })[0];
+    if (cerrados.length >= 2 && actual && actual.venta_total_hoja > 0){
+      var prom = cerrados.reduce(function(s,m){ return s + m.margen_pct; }, 0) / cerrados.length;
+      var dif = actual.margen_pct - prom;
+      if (Math.abs(dif) >= 0.4){
+        chips.push({cls: dif < 0 ? 'atencion' : 'ok',
+          txt:'Margen de ' + (MESES_L[pad2(hoy.getMonth()+1)]||'') + ' <b>' + fmtPct(actual.margen_pct) + '</b>, ' +
+              (dif < 0 ? 'abajo' : 'arriba') + ' del promedio ' + fmtPct(prom) + ' de los meses cerrados'});
+      }
+    }
+
+    // 4. Clientes grandes que cayeron o subieron fuerte: mismos días del mes, contra el mes pasado.
+    var dia = hoy.getDate();
+    var mesAnt = new Date(hoy.getFullYear(), hoy.getMonth()-1, 1);
+    var kAntIni = diaKey(mesAnt), kAntFin = diaKey(new Date(mesAnt.getFullYear(), mesAnt.getMonth(), Math.min(dia, new Date(mesAnt.getFullYear(), mesAnt.getMonth()+1, 0).getDate())));
+    var kActIni = diaKey(new Date(hoy.getFullYear(), hoy.getMonth(), 1)), kActFin = diaKey(hoy);
+    var k90 = diaKey(new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()-90));
+    var porCli = {};
+    O.forEach(function(o){
+      var c = o.cliente; if (!c) return;
+      var x = porCli[c] || (porCli[c] = {t90:0, ant:0, act:0});
+      var v = Number(o.venta_total_hoja)||0, k = o.dia_key;
+      if (k >= k90) x.t90 += v;
+      if (k >= kAntIni && k <= kAntFin) x.ant += v;
+      if (k >= kActIni && k <= kActFin) x.act += v;
+    });
+    var top = Object.keys(porCli).sort(function(a,b){ return porCli[b].t90 - porCli[a].t90; }).slice(0,5);
+    var movs = [];
+    top.forEach(function(c){
+      var x = porCli[c]; if (x.ant < 15000) return;
+      var p = (x.act - x.ant) / x.ant * 100;
+      if (p <= -30 || p >= 30) movs.push({c:c, p:p, ant:x.ant, act:x.act});
+    });
+    movs.sort(function(a,b){ return Math.abs(b.p) - Math.abs(a.p); }).slice(0,2).forEach(function(m){
+      // "Cayó 100%" con $0 es cierto pero suena a quiebre; lo útil es decir que todavía no compró.
+      var txt = m.act === 0
+        ? '<b>' + esc(m.c) + '</b> todavía no compró este mes; a esta altura del mes pasado llevaba ' + fmtMoney(m.ant)
+        : '<b>' + esc(m.c) + '</b> ' + (m.p < 0 ? 'cayó' : 'subió') + ' ' + Math.round(Math.abs(m.p)) + '% contra los mismos ' + dia + ' días del mes pasado (' + fmtMoney(m.act) + ' vs ' + fmtMoney(m.ant) + ')';
+      chips.push({cls: m.p < 0 ? 'atencion' : 'ok', txt: txt});
+    });
+
+    // 5. Modelos con volumen y margen flojo en los últimos 90 días.
+    var mm = {};
+    L.forEach(function(l){
+      if (!l.es_iphone || l.dia_key < k90) return;
+      var b = partirModelo(l.modelo).etiqueta;
+      var x = mm[b] || (mm[b] = {u:0, sm:0, n:0});
+      x.u += Number(l.cantidad)||0; x.sm += Number(l.margen_linea_pct)||0; x.n++;
+    });
+    var flojos = Object.keys(mm).map(function(k){ return {k:k, u:mm[k].u, m:mm[k].sm/mm[k].n}; })
+      .filter(function(x){ return x.u >= 100 && x.m < 4; }).sort(function(a,b){ return a.m - b.m; }).slice(0,3);
+    if (flojos.length){
+      chips.push({cls:'atencion', txt:'Margen bajo 4% con volumen: ' + flojos.map(function(x){ return '<b>' + esc(x.k) + '</b> ' + fmtPct(x.m); }).join(' · ')});
+    }
+
+    if (!chips.length){
+      chips.push({cls:'ok', txt:'Sin alertas: márgenes, clientes grandes y carga de la hoja en orden'});
+    }
+    box.innerHTML = chips.map(function(c){
+      return '<' + (c.accion ? 'button type="button"' : 'span') + ' class="alerta ' + c.cls + '"' +
+        (c.accion ? ' data-accion="' + c.accion + '"' : '') + '><i></i><span>' + c.txt + '</span></' + (c.accion ? 'button' : 'span') + '>';
+    }).join('');
   }
 
   // ---------- render: gráfico ----------
@@ -909,8 +1193,11 @@ img{max-width:100%}
   /** Serie por período con todo lo que el gráfico necesita mostrar. */
   function serieDe(ordenes, lineas, campo){
     var mapa = {};
+    // Una orden sin fecha no es un período: dibujarla como barra era el "mes fantasma".
+    var esFecha = /^\d{4}-\d{2}(-\d{2})?$/;
     ordenes.forEach(function(o){
-      var k = o[campo] || 'sin_dato';
+      var k = o[campo];
+      if (!esFecha.test(String(k || ''))) return;
       if (!mapa[k]) mapa[k] = {clave:k, facturado:0, ganancia:0, ordenes:0, unidades:0};
       mapa[k].facturado += Number(o.venta_total_hoja)||0;
       mapa[k].ganancia += Number(o.ganancia_total)||0;
@@ -918,7 +1205,7 @@ img{max-width:100%}
     });
     lineas.forEach(function(l){
       if (!l.es_iphone) return;
-      var k = l[campo] || 'sin_dato';
+      var k = l[campo];
       if (mapa[k]) mapa[k].unidades += Number(l.cantidad)||0;
     });
     return Object.keys(mapa).map(function(k){
@@ -928,15 +1215,18 @@ img{max-width:100%}
     }).sort(function(a,b){ return a.clave < b.clave ? -1 : 1; });
   }
 
-  function pintarGrafico(serie, gran){
-    var svg = $('grafSvg'), ejes = $('grafEjes'), tip = $('grafTip');
+  var FUENTE = '-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,system-ui,sans-serif';
+
+  function pintarGrafico(serie, gran, serieAnterior){
     var cfg = METRICAS[METRICA];
     var periodo = gran === 'day' ? 'diaria' : 'mensual';
+    var el = $('grafEcharts');
+    if (!window.echarts){ el.innerHTML = '<p class="vacio">No se pudo cargar el motor de gráficos.</p>'; return; }
+    if (!CHART) CHART = echarts.init(el, null, {renderer:'canvas'});
 
     if (!serie || !serie.length){
-      svg.innerHTML = ''; ejes.innerHTML = '';
+      CHART.clear();
       $('grafStats').innerHTML = '';
-      $('grafLeyenda').innerHTML = '';
       $('grafTitulo').textContent = cfg.titulo;
       $('grafSub').textContent = 'Sin ventas en este período';
       return;
@@ -945,131 +1235,149 @@ img{max-width:100%}
     var n = serie.length;
     var vals = serie.map(cfg.valor);
     var maxVal = Math.max.apply(null, vals);
-    if (maxVal <= 0) maxVal = 1;
-    var tope = maxVal * 1.12;
-
-    // --- cifras de arriba ---
     var totalFact = serie.reduce(function(a,d){ return a + d.facturado; }, 0);
     var totalGan = serie.reduce(function(a,d){ return a + d.ganancia; }, 0);
     var total, promedio;
-    if (METRICA === 'margen'){
-      total = totalFact > 0 ? (totalGan/totalFact)*100 : 0;
-      promedio = total;
-    } else {
-      total = vals.reduce(function(a,v){ return a+v; }, 0);
-      promedio = total / n;
-    }
+    if (METRICA === 'margen'){ total = totalFact > 0 ? (totalGan/totalFact)*100 : 0; promedio = total; }
+    else { total = vals.reduce(function(a,v){ return a+v; }, 0); promedio = total / n; }
     var iMejor = vals.indexOf(maxVal);
+    var unidadT = gran === 'day' ? 'día' : 'mes';
     $('grafStats').innerHTML =
       '<div class="graf-stat"><div class="l">' + (METRICA === 'margen' ? 'Margen del período' : 'Total del período') +
         '</div><div class="v">' + fmtSegun(total, cfg.tipo) + '</div></div>' +
-      '<div class="graf-stat"><div class="l">Promedio por ' + (gran === 'day' ? 'día' : 'mes') +
-        '</div><div class="v">' + fmtSegun(promedio, cfg.tipo) + '</div></div>' +
-      '<div class="graf-stat"><div class="l">Mejor ' + (gran === 'day' ? 'día' : 'mes') + ': ' +
-        esc(etiquetaClave(serie[iMejor].clave, gran, true)) +
+      '<div class="graf-stat"><div class="l">Promedio por ' + unidadT + '</div><div class="v">' + fmtSegun(promedio, cfg.tipo) + '</div></div>' +
+      '<div class="graf-stat"><div class="l">Mejor ' + unidadT + ': ' + esc(etiquetaClave(serie[iMejor].clave, gran, true)) +
         '</div><div class="v">' + fmtSegun(maxVal, cfg.tipo) + '</div></div>';
 
-    // --- geometría ---
-    var W = 820, H = 300, padL = 66, padR = 810, top = 14, bot = 250;
-    var ancho = padR - padL;
-    var slot = ancho / n;
-    var wBarra = Math.max(3, Math.min(46, slot * 0.62));
-    var yDe = function(v){ return bot - (v/tope) * (bot - top); };
-
-    // --- grilla + eje de valores ---
-    var grid = '';
-    for (var g = 0; g <= 4; g++){
-      var v = tope * g / 4, gy = yDe(v);
-      grid += '<line x1="'+padL+'" y1="'+gy.toFixed(1)+'" x2="'+padR+'" y2="'+gy.toFixed(1)+
-              '" stroke="rgba(12,20,40,.08)" stroke-width="1"/>' +
-              '<text x="'+(padL-12)+'" y="'+(gy+4).toFixed(1)+'" text-anchor="end" ' +
-              'font-size="12" fill="#71809a">' + esc(fmtCorto(v, cfg.tipo)) + '</text>';
+    var labels = serie.map(function(d){ return etiquetaClave(d.clave, gran, false); });
+    var series = [];
+    if (METRICA === 'facturado'){
+      series.push({name:'Ganancia neta', type:'bar', stack:'f', barMaxWidth:46, color:'#0071e3',
+        data: serie.map(function(d){ return Math.max(d.ganancia, 0); })});
+      series.push({name:'Costo y gastos', type:'bar', stack:'f', barMaxWidth:46, color:'rgba(0,113,227,.2)',
+        itemStyle:{borderRadius:[5,5,0,0]},
+        data: serie.map(function(d){ return Math.max(d.facturado - Math.max(d.ganancia,0), 0); })});
+    } else {
+      series.push({name:cfg.titulo, type:'bar', barMaxWidth:46, color:'rgba(0,113,227,.82)',
+        itemStyle:{borderRadius:[5,5,0,0]}, data: vals});
     }
-
-    // --- barras ---
-    var barras = serie.map(function(d, i){
-      var x = padL + slot*i + (slot - wBarra)/2;
-      var val = cfg.valor(d);
-      var yTop = yDe(Math.max(val, 0));
-      var alto = Math.max(0, bot - yTop);
-      var r = Math.min(5, wBarra/2);
-
-      if (METRICA === 'facturado' && d.facturado > 0){
-        // la ganancia comparte base con todas las demás: así se compara de un vistazo
-        var altoGan = Math.max(0, (Math.max(d.ganancia,0)/tope) * (bot - top));
-        var yGan = bot - altoGan;
-        return '<g data-i="'+i+'">' +
-          '<rect x="'+x.toFixed(1)+'" y="'+yTop.toFixed(1)+'" width="'+wBarra.toFixed(1)+
-            '" height="'+alto.toFixed(1)+'" rx="'+r+'" fill="#0071e3" opacity=".2"/>' +
-          '<rect x="'+x.toFixed(1)+'" y="'+yGan.toFixed(1)+'" width="'+wBarra.toFixed(1)+
-            '" height="'+altoGan.toFixed(1)+'" rx="'+Math.min(r, altoGan/2).toFixed(1)+'" fill="#0071e3"/>' +
-        '</g>';
-      }
-      return '<g data-i="'+i+'"><rect x="'+x.toFixed(1)+'" y="'+yTop.toFixed(1)+'" width="'+wBarra.toFixed(1)+
-        '" height="'+alto.toFixed(1)+'" rx="'+r+'" fill="#0071e3" opacity=".82"/></g>';
-    }).join('');
-
-    // --- línea de promedio (no aplica al margen: ahí el promedio ES el total) ---
-    var lineaProm = '';
     if (METRICA !== 'margen'){
-      var yP = yDe(promedio);
-      lineaProm = '<line x1="'+padL+'" y1="'+yP.toFixed(1)+'" x2="'+padR+'" y2="'+yP.toFixed(1)+
-        '" stroke="#0b0f16" stroke-width="1.4" stroke-dasharray="5 4" opacity=".38"/>' +
-        '<text x="'+(padR-2)+'" y="'+(yP-7).toFixed(1)+'" text-anchor="end" font-size="11.5" ' +
-        'fill="#404a5c">promedio ' + esc(fmtCorto(promedio, cfg.tipo)) + '</text>';
+      series[series.length-1].markLine = {silent:true, symbol:'none',
+        lineStyle:{color:'#0b0f16', type:'dashed', opacity:.38, width:1.4},
+        label:{position:'insideEndTop', color:'#404a5c', fontSize:11.5, formatter:'promedio ' + fmtCorto(promedio, cfg.tipo)},
+        data:[{yAxis: promedio}]};
+    }
+    // El período anterior de igual largo, en gris fantasma: para comparar sin cambiar de pantalla.
+    if (serieAnterior && serieAnterior.length){
+      series.push({name:'Período anterior', type:'line', z:1, symbol:'none', smooth:false,
+        color:'rgba(11,15,22,.32)', lineStyle:{type:'dashed', width:1.6},
+        data: labels.map(function(_, i){ var d = serieAnterior[i]; return d ? cfg.valor(d) : null; })});
     }
 
-    var hits = serie.map(function(d, i){
-      return '<rect class="hit" data-i="'+i+'" x="'+(padL + slot*i).toFixed(1)+'" y="'+top+
-             '" width="'+slot.toFixed(1)+'" height="'+(bot-top)+'" fill="transparent"/>';
-    }).join('');
-
-    svg.innerHTML = grid + barras + lineaProm + hits;
-
-    // --- interacción ---
-    var grupos = svg.querySelectorAll('g[data-i]');
-    Array.prototype.forEach.call(svg.querySelectorAll('.hit'), function(rect){
-      rect.addEventListener('mouseenter', function(){
-        var i = +rect.getAttribute('data-i'), d = serie[i];
-        Array.prototype.forEach.call(grupos, function(g, j){ g.style.opacity = j === i ? 1 : .45; });
-        var box = svg.getBoundingClientRect();
-        var cx = padL + slot*i + slot/2;
-        tip.style.left = (cx * (box.width/W)) + 'px';
-        tip.style.top = (yDe(cfg.valor(d)) / H * box.height) + 'px';
-        tip.style.opacity = 1;
-        tip.innerHTML =
-          '<b>' + esc(etiquetaClave(d.clave, gran, true)) + '</b><br>' +
-          'Facturado ' + fmtMoney(d.facturado) + '<br>' +
-          'Ganancia ' + fmtMoney(d.ganancia) + ' · ' + fmtPct(d.margen) + '<br>' +
-          '<span class="t-tenue">' + fmtNum(d.ordenes) + (d.ordenes === 1 ? ' orden' : ' órdenes') +
-          ' · ' + fmtNum(d.unidades) + ' u.</span>';
-      });
-      rect.addEventListener('mouseleave', function(){
-        tip.style.opacity = 0;
-        Array.prototype.forEach.call(grupos, function(g){ g.style.opacity = 1; });
-      });
-    });
-
-    // --- eje de períodos ---
-    var cadaN = n > 16 ? Math.ceil(n/12) : 1;
-    ejes.innerHTML = serie.map(function(d, i){
-      var ultimo = i === n-1;
-      var txt = (n > 16 && i % cadaN !== 0 && !ultimo) ? '' :
-                esc(etiquetaClave(d.clave, gran, false)) + (ultimo ? '*' : '');
-      return '<span style="flex:1;text-align:center">' + txt + '</span>';
-    }).join('');
-    ejes.style.paddingLeft = (padL/W*100) + '%';
-    ejes.style.paddingRight = ((W-padR)/W*100) + '%';
-
-    $('grafLeyenda').innerHTML = cfg.leyenda
-      ? '<span><i style="background:#0071e3"></i> Ganancia neta</span>' +
-        '<span><i style="background:rgba(0,113,227,.2)"></i> Costo y gastos</span>' +
-        '<span><i style="background:#0b0f16;opacity:.38"></i> Promedio del período</span>'
-      : (METRICA === 'margen' ? '' : '<span><i style="background:#0b0f16;opacity:.38"></i> Promedio del período</span>');
+    var conZoom = n > 12;
+    var conLeyenda = series.length > 1;
+    CHART.setOption({
+      animationDuration: SIN_MOVIMIENTO ? 0 : 550, animationEasing:'cubicOut',
+      textStyle:{fontFamily:FUENTE},
+      grid:{left:10, right:14, top:22, bottom:(conZoom ? 44 : 8) + (conLeyenda ? 26 : 0), containLabel:true},
+      legend: conLeyenda ? {bottom:0, icon:'roundRect', itemWidth:10, itemHeight:10, textStyle:{color:'#71809a', fontSize:12.5}} : undefined,
+      tooltip:{trigger:'axis', axisPointer:{type:'shadow', shadowStyle:{color:'rgba(0,113,227,.06)'}},
+        backgroundColor:'rgba(11,15,22,.93)', borderWidth:0, padding:[9,12], textStyle:{color:'#fff', fontSize:12.5},
+        formatter:function(ps){
+          var i = ps[0].dataIndex, d = serie[i];
+          var ant = serieAnterior && serieAnterior[i];
+          return '<b>' + esc(etiquetaClave(d.clave, gran, true)) + '</b><br>' +
+            'Facturado ' + fmtMoney(d.facturado) + '<br>Ganancia ' + fmtMoney(d.ganancia) + ' · ' + fmtPct(d.margen) + '<br>' +
+            '<span style="opacity:.7">' + fmtNum(d.ordenes) + (d.ordenes === 1 ? ' orden' : ' órdenes') + ' · ' + fmtNum(d.unidades) + ' u.</span>' +
+            (ant ? '<br><span style="opacity:.7">Período anterior: ' + fmtSegun(cfg.valor(ant), cfg.tipo) + '</span>' : '');
+        }},
+      xAxis:{type:'category', data:labels, axisTick:{show:false}, axisLine:{lineStyle:{color:'rgba(12,20,40,.12)'}},
+        axisLabel:{color:'#71809a', fontSize:11.5, interval: n > 16 ? Math.ceil(n/12) - 1 : 0}},
+      yAxis:{type:'value', axisLine:{show:false}, splitLine:{lineStyle:{color:'rgba(12,20,40,.08)'}},
+        axisLabel:{color:'#71809a', fontSize:11.5, formatter:function(v){ return fmtCorto(v, cfg.tipo); }}},
+      dataZoom: conZoom
+        ? [{type:'inside', zoomOnMouseWheel:'ctrl', moveOnMouseWheel:false},
+           {type:'slider', height:16, bottom: conLeyenda ? 28 : 6, borderColor:'transparent', backgroundColor:'rgba(12,20,40,.04)',
+            fillerColor:'rgba(0,113,227,.12)', dataBackground:{lineStyle:{opacity:0}, areaStyle:{color:'rgba(0,113,227,.18)'}},
+            selectedDataBackground:{lineStyle:{opacity:0}, areaStyle:{color:'rgba(0,113,227,.35)'}},
+            handleSize:14, handleStyle:{color:'#fff', borderColor:'rgba(12,20,40,.25)'}, showDetail:false, brushSelect:true}]
+        : [{type:'inside', zoomOnMouseWheel:'ctrl', moveOnMouseWheel:false}],
+      series: series
+    }, true);
 
     $('grafTitulo').textContent = cfg.titulo + ' ' + periodo;
-    $('grafSub').textContent = etiquetaClave(serie[0].clave, gran, true) + ' — ' +
-                               etiquetaClave(serie[n-1].clave, gran, true);
+    $('grafSub').textContent = etiquetaClave(serie[0].clave, gran, true) + ' — ' + etiquetaClave(serie[n-1].clave, gran, true) +
+      (conZoom ? ' · arrastrá en la barra de abajo para acotar' : '');
+  }
+
+  // ---------- mix de modelos: mapa (treemap) y posiciones (rangos mes a mes) ----------
+  function pintarMix(d){
+    var el = $('mixEcharts');
+    if (!window.echarts || !el) return;
+    if (!MIX) MIX = echarts.init(el, null, {renderer:'canvas'});
+    var mods = modelosDe(d.lineas);
+    if (!mods.length){ MIX.clear(); return; }
+
+    if (MIX_TAB === 'mapa'){
+      var top = mods.slice(0, 24);
+      var ms = top.map(function(m){ return m.margen_pct; });
+      var mMin = Math.min.apply(null, ms), mMax = Math.max.apply(null, ms);
+      $('mixSub').textContent = 'Área = unidades vendidas en el período · más oscuro = más margen.';
+      MIX.setOption({
+        animationDuration: SIN_MOVIMIENTO ? 0 : 550,
+        textStyle:{fontFamily:FUENTE},
+        tooltip:{backgroundColor:'rgba(11,15,22,.93)', borderWidth:0, textStyle:{color:'#fff', fontSize:12.5},
+          formatter:function(p){ var m = p.data; return '<b>' + esc(m.name) + '</b><br>' + fmtNum(m.u) + ' u. · ' + fmtMoney(m.venta) + '<br>margen ' + fmtPct(m.margen); }},
+        visualMap:{show:false, min:mMin, max:mMax === mMin ? mMin + 1 : mMax, dimension:1, inRange:{color:['#e6f0fb','#8dbdf0','#2f86e0']}},
+        series:[{type:'treemap', roam:false, nodeClick:false, breadcrumb:{show:false}, width:'100%', height:'100%', top:0, left:0,
+          itemStyle:{borderColor:'#fbfcfd', borderWidth:3, gapWidth:3, borderRadius:6},
+          label:{color:'#0b0f16', fontSize:12.5, fontWeight:600, formatter:function(p){ return p.name + '\n' + fmtNum(p.data.u) + ' u.'; }},
+          emphasis:{itemStyle:{borderColor:'#0071e3'}},
+          data: top.map(function(m){ return {name:m.modelo, value:[m.cantidad, m.margen_pct], u:m.cantidad, venta:m.total_venta, margen:m.margen_pct}; })}]
+      }, true);
+      return;
+    }
+
+    // Posiciones: ranking por unidades en cada uno de los últimos 6 meses con venta.
+    var L = (PAYLOAD && PAYLOAD.lineas_raw) || [];
+    var porMes = {};
+    L.forEach(function(l){
+      if (!l.es_iphone || !/^\d{4}-\d{2}$/.test(String(l.mes_key||''))) return;
+      var b = partirModelo(l.modelo).etiqueta;
+      var m = porMes[l.mes_key] || (porMes[l.mes_key] = {});
+      m[b] = (m[b]||0) + (Number(l.cantidad)||0);
+    });
+    var meses = Object.keys(porMes).sort().slice(-6);
+    var rank = {};
+    meses.forEach(function(k){
+      Object.keys(porMes[k]).sort(function(a,b){ return porMes[k][b] - porMes[k][a]; }).forEach(function(mod, i){
+        (rank[mod] = rank[mod] || {})[k] = {pos:i+1, u:porMes[k][mod]};
+      });
+    });
+    var ultimo = meses[meses.length-1];
+    var elegidos = Object.keys(rank).filter(function(m){ return rank[m][ultimo] && rank[m][ultimo].pos <= 6; })
+      .sort(function(a,b){ return rank[a][ultimo].pos - rank[b][ultimo].pos; });
+    var paleta = ['#0071e3','#2f9184','#7069b8','#0b0f16','#71809a','#4a9bd6'];
+    var TOPE = 8;
+    $('mixSub').textContent = 'Posición por unidades, mes a mes. Los seis primeros del último mes; fuera del top ' + TOPE + ' la línea se corta.';
+    MIX.setOption({
+      animationDuration: SIN_MOVIMIENTO ? 0 : 550,
+      textStyle:{fontFamily:FUENTE},
+      grid:{left:10, right:150, top:14, bottom:8, containLabel:true},
+      tooltip:{trigger:'item', backgroundColor:'rgba(11,15,22,.93)', borderWidth:0, textStyle:{color:'#fff', fontSize:12.5},
+        formatter:function(p){ var r = rank[p.seriesName][meses[p.dataIndex]]; return '<b>' + esc(p.seriesName) + '</b><br>' + etiquetaClave(meses[p.dataIndex],'month',true) + ': puesto ' + (r ? r.pos : '—') + (r ? ' · ' + fmtNum(r.u) + ' u.' : ''); }},
+      xAxis:{type:'category', data:meses.map(function(k){ return etiquetaClave(k,'month',false); }), boundaryGap:false,
+        axisTick:{show:false}, axisLine:{lineStyle:{color:'rgba(12,20,40,.12)'}}, axisLabel:{color:'#71809a', fontSize:11.5}},
+      yAxis:{type:'value', inverse:true, min:1, max:TOPE, interval:1, axisLine:{show:false}, splitLine:{lineStyle:{color:'rgba(12,20,40,.06)'}},
+        axisLabel:{color:'#71809a', fontSize:11.5, formatter:function(v){ return '#' + v; }}},
+      series: elegidos.map(function(mod, i){
+        return {name:mod, type:'line', smooth:.35, symbol:'circle', symbolSize:9, color:paleta[i % paleta.length],
+          lineStyle:{width:2.6}, connectNulls:false,
+          endLabel:{show:true, formatter:mod, color:paleta[i % paleta.length], fontSize:12, fontWeight:600, offset:[6,0]},
+          emphasis:{focus:'series', lineStyle:{width:4}},
+          data: meses.map(function(k){ var r = rank[mod][k]; return r && r.pos <= TOPE ? r.pos : null; })};
+      })
+    }, true);
   }
 
   // ---------- render: listas tipo ranking ----------
@@ -1227,9 +1535,10 @@ img{max-width:100%}
     }
 
     var cards = [
+      // Lo abierto se prorratea hasta hoy, igual que los filtros de arriba: misma cifra en toda la pantalla.
       {tag:'Trimestre en curso', tit:'T' + (Math.floor(hoy.getMonth()/3)+1) + ' · ' + hoy.getFullYear(),
-       d:buscarTri(claveTri), curso:true, gasto:gastoTrimestre(claveTri)},
-      {tag:'Mes en curso', tit:m0.nombre, d:buscarMes(m0.clave), curso:true, gasto:gastoDelMes(m0.clave)},
+       d:buscarTri(claveTri), curso:true, gasto:gastosDelRango({desde:diaKey(inicioTrimestre(hoy)), hasta:diaKey(hoy)})},
+      {tag:'Mes en curso', tit:m0.nombre, d:buscarMes(m0.clave), curso:true, gasto:gastosDelRango({desde:diaKey(inicioMes(hoy)), hasta:diaKey(hoy)})},
       {tag:'Mes pasado', tit:m1.nombre, d:buscarMes(m1.clave), curso:false, gasto:gastoDelMes(m1.clave)},
       {tag:'Mes anterior', tit:m2.nombre, d:buscarMes(m2.clave), curso:false, gasto:gastoDelMes(m2.clave)},
       {tag:'Mejor trimestre', tit:tNombre(mejorTri), d:mejorTri || vacio, curso:false,
@@ -1252,7 +1561,7 @@ img{max-width:100%}
           '<p class="mini-label">' + (c.curso ? 'Utilidad en curso' : 'Utilidad final') + '</p>' +
           '<p class="mini-valor ' + (utilidad < 0 ? 'coral' : 'verde') + '" style="font-size:18px">' +
             fmtMoney(utilidad) + '</p>' +
-          '<p class="mini-label" style="margin-top:3px">menos ' + fmtMoney(c.gasto || 0) + ' de gastos</p>' +
+          '<p class="mini-label" style="margin-top:3px">menos ' + fmtMoney(c.gasto || 0) + ' de gastos' + (c.curso ? ' hasta hoy' : '') + '</p>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -1281,7 +1590,7 @@ img{max-width:100%}
       '</p>' +
       '<div class="lg-tabla"><table><thead><tr><th>Orden</th><th>Cliente</th><th>Fecha</th>' +
       '<th class="lg-n">Venta</th></tr></thead><tbody>' + filas + '</tbody></table></div>' + extra;
-    box.classList.remove('oculto');
+    box.classList.toggle('oculto', !PEND_ABIERTO);
   }
 
   // ---------- render: vista clientes ----------
@@ -1409,7 +1718,31 @@ img{max-width:100%}
   function pintarGraficoActual(){
     var d = datosFiltrados();
     var g = granularidadActual();
-    pintarGrafico(serieDe(d.ordenes, d.lineas, g.campo), g.gran);
+    var anterior = null;
+    // En vistas diarias se superpone el tramo anterior de igual largo (la semana previa, el mes previo).
+    if (g.gran === 'day' && d.rango && d.rango.desde && d.rango.hasta){
+      var d1 = new Date(d.rango.desde + 'T00:00:00'), d2 = new Date(d.rango.hasta + 'T00:00:00');
+      var largo = Math.round((d2 - d1) / 86400000) + 1;
+      var a2 = new Date(d1); a2.setDate(a2.getDate() - 1);
+      var a1 = new Date(a2); a1.setDate(a1.getDate() - largo + 1);
+      var kA1 = diaKey(a1), kA2 = diaKey(a2);
+      var O = (PAYLOAD.ordenes_raw||[]).filter(function(o){ return o.dia_key >= kA1 && o.dia_key <= kA2; });
+      var L = (PAYLOAD.lineas_raw||[]).filter(function(l){ return l.dia_key >= kA1 && l.dia_key <= kA2; });
+      var mapaAnt = {};
+      serieDe(O, L, 'dia_key').forEach(function(x){ mapaAnt[x.clave] = x; });
+      // alineado día a día con el rango actual: la posición i del anterior es la posición i del actual
+      anterior = [];
+      var cur = new Date(d1), curA = new Date(a1);
+      while (cur <= d2){ anterior.push(mapaAnt[diaKey(curA)] || null); cur.setDate(cur.getDate()+1); curA.setDate(curA.getDate()+1); }
+      // la serie actual puede tener huecos (días sin venta); se alinea por clave, no por índice
+      var serieAct = serieDe(d.ordenes, d.lineas, 'dia_key');
+      var porDia = {}; var idx = 0; var c2 = new Date(d1);
+      while (c2 <= d2){ porDia[diaKey(c2)] = anterior[idx++]; c2.setDate(c2.getDate()+1); }
+      anterior = serieAct.map(function(x){ return porDia[x.clave] || null; });
+      pintarGrafico(serieAct, g.gran, anterior);
+      return;
+    }
+    pintarGrafico(serieDe(d.ordenes, d.lineas, g.campo), g.gran, null);
   }
 
   function pintarResumen(){
@@ -1432,6 +1765,7 @@ img{max-width:100%}
       secundario: function(m){ return fmtMoney(m.total_venta) + ' · ' + fmtPct(m.margen_pct); }
     });
     pintarCoberturaModelos(modelosDe(d.lineas));
+    pintarMix(d);
     pintarRanking('listaClientes', clientesDe(d.ordenes), {
       valor: function(c){ return c.venta_total_hoja; },
       nombre: function(c){ return c.cliente; },
@@ -1447,9 +1781,11 @@ img{max-width:100%}
     $('pillActualizado').textContent = 'Actualizado ' + pad2(gen.getHours()) + ':' + pad2(gen.getMinutes());
     $('pieActualizado').textContent = gen.toLocaleString('es-AR');
 
+    pintarAlertas();
     pintarPendientes();
     pintarChipsMeses();
     pintarComparativaMes();
+    document.body.classList.remove('is-cargando');
     if (VISTA === 'resumen'){
       pintarResumen();
       pintarComparativo();
@@ -1519,6 +1855,7 @@ img{max-width:100%}
 
   // ---------- interacción ----------
   function cambiarVista(v){
+    setTimeout(function(){ if (CHART) CHART.resize(); if (MIX) MIX.resize(); }, 60);
     VISTA = v;
     Array.prototype.forEach.call(document.querySelectorAll('#tabs .tab'), function(t){
       t.classList.toggle('is-active', t.getAttribute('data-vista') === v);
@@ -1609,6 +1946,7 @@ img{max-width:100%}
       .then(function(res){ if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
       .then(function(payload){
         PAYLOAD = payload;
+        ULTIMA_CARGA = Date.now();
         $('avisoError').classList.add('oculto');
         pintarTodo();
         try { localStorage.setItem('amsei-cache', JSON.stringify(payload)); } catch(e){}
@@ -1621,6 +1959,31 @@ img{max-width:100%}
           if (cache && !PAYLOAD){ PAYLOAD = JSON.parse(cache); pintarTodo(); }
         } catch(e){}
       });
+  }
+
+  $('alertas').addEventListener('click', function(ev){
+    var b = ev.target.closest('[data-accion="pendientes"]'); if (!b) return;
+    PEND_ABIERTO = !PEND_ABIERTO;
+    b.classList.toggle('is-open', PEND_ABIERTO);
+    $('avisoPendientes').classList.toggle('oculto', !PEND_ABIERTO);
+  });
+  $('subTabsMix').addEventListener('click', function(ev){
+    var t = ev.target.closest('[data-mix]'); if (!t) return;
+    MIX_TAB = t.getAttribute('data-mix');
+    Array.prototype.forEach.call($('subTabsMix').querySelectorAll('.sub-tab'), function(s){ s.classList.toggle('is-active', s === t); });
+    pintarMix(datosFiltrados());
+  });
+  var tRedim = null;
+  window.addEventListener('resize', function(){
+    clearTimeout(tRedim);
+    tRedim = setTimeout(function(){ if (CHART) CHART.resize(); if (MIX) MIX.resize(); }, 120);
+  });
+  // Al volver a la pestaña se refresca si pasó más de un minuto: el dato se siente vivo sin martillar el API.
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden && Date.now() - ULTIMA_CARGA > 60000) cargar();
+  });
+  if ('serviceWorker' in navigator && location.protocol === 'https:'){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
   }
 
   cargar();
