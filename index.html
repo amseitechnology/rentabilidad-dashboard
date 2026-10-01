@@ -1110,8 +1110,14 @@ img{max-width:100%}
     var pend = PAYLOAD.ordenes_pendientes || [];
     if (pend.length){
       var monto = pend.reduce(function(s,o){ return s + (Number(o.venta_total_hoja)||0); }, 0);
+      // Con una o dos se nombran: "la de Carlos" puede ser otra orden de Carlos, y el
+      // número es lo que permite buscarla en la hoja sin abrir el detalle.
+      var cuales = pend.length <= 2
+        ? ': ' + pend.map(function(o){ return esc(o.orden) + (o.cliente ? ' ' + esc(o.cliente) : ''); }).join(', ')
+        : '';
       chips.push({cls:'atencion' + (PEND_ABIERTO ? ' is-open' : ''), accion:'pendientes',
-        txt:'<b>' + pend.length + (pend.length === 1 ? ' orden' : ' órdenes') + '</b> sin factura de compra · ' + fmtMoney(monto) + ' fuera del panel'});
+        txt:'<b>' + pend.length + (pend.length === 1 ? ' orden' : ' órdenes') + '</b> sin factura de compra' + cuales +
+            (monto ? ' · ' + fmtMoney(monto) + ' fuera del panel' : '')});
     }
 
     // 2. Órdenes contadas sin fecha: no entran al gráfico ni a los filtros.
@@ -1606,8 +1612,9 @@ img{max-width:100%}
     var filas = p.slice(0, 6).map(function(o){
       var d = String(o.dia_key||'').split('-');
       var fecha = d.length === 3 ? (d[2] + ' ' + (MESES[d[1]]||'')) : '—';
+      var venta = Number(o.venta_total_hoja);
       return '<tr><td>' + esc(o.orden) + '</td><td>' + esc(o.cliente || '—') + '</td>' +
-             '<td>' + fecha + '</td><td class="lg-n">' + fmtMoney(o.venta_total_hoja) + '</td></tr>';
+             '<td>' + fecha + '</td><td class="lg-n">' + (venta ? fmtMoney(venta) : '—') + '</td></tr>';
     }).join('');
     var extra = p.length > 6 ? '<p class="lg-sub" style="margin:12px 0 0">y ' + (p.length-6) + ' más.</p>' : '';
 
@@ -1619,7 +1626,13 @@ img{max-width:100%}
         ' No están sumadas en ningún número de este panel: sin el costo, la ganancia saldría inflada.' +
       '</p>' +
       '<div class="lg-tabla"><table><thead><tr><th>Orden</th><th>Cliente</th><th>Fecha</th>' +
-      '<th class="lg-n">Venta</th></tr></thead><tbody>' + filas + '</tbody></table></div>' + extra;
+      '<th class="lg-n">Venta</th></tr></thead><tbody>' + filas + '</tbody></table></div>' + extra +
+      // Lo que más confunde: cargar la factura y que el aviso siga. El panel no lee las
+      // pestañas de ventas directo, lee lo que el script de la hoja reconstruye.
+      '<p class="lg-sub" style="margin:14px 0 0;max-width:64ch">¿Ya la cargaste? El aviso se va cuando el script ' +
+        'de la hoja vuelve a armar la pestaña <i>ordenes</i>: lo hace solo, o al instante desde el menú ' +
+        '<b>AMSEI · Looker → Reconstruir lineas y ordenes</b>. Revisá también que el número de orden sea ' +
+        'el mismo en la hoja y acá.</p>';
     box.classList.toggle('oculto', !PEND_ABIERTO);
   }
 
@@ -1808,7 +1821,11 @@ img{max-width:100%}
     if (!PAYLOAD) return;
     $('pillRango').textContent = etiquetaRango(RANGO);
     var gen = PAYLOAD.generado ? new Date(PAYLOAD.generado) : new Date();
-    $('pillActualizado').textContent = 'Actualizado ' + pad2(gen.getHours()) + ':' + pad2(gen.getMinutes());
+    // Solo la hora engaña cuando el dato es de otro día (copia guardada, sin conexión): ahí va también la fecha.
+    var esHoy = diaKey(gen) === diaKey(new Date());
+    $('pillActualizado').textContent = 'Actualizado ' +
+      (esHoy ? '' : gen.getDate() + ' ' + (MESES[pad2(gen.getMonth()+1)] || '') + ' ') +
+      pad2(gen.getHours()) + ':' + pad2(gen.getMinutes());
     $('pieActualizado').textContent = gen.toLocaleString('es-AR');
 
     pintarAlertas();
@@ -1988,6 +2005,19 @@ img{max-width:100%}
   function borrarAcceso(){
     TOKEN = null; PAYLOAD = null;
     try { localStorage.removeItem('amsei-token'); localStorage.removeItem('amsei-cache'); } catch(e){}
+    // sw.js guarda cada respuesta del API (con todos los números) para abrir sin red.
+    // Sin clave esa copia no debe quedar en el equipo: se borra con el resto.
+    if (!window.caches) return Promise.resolve();
+    return caches.keys().then(function(ks){
+      return Promise.all(ks.map(function(k){
+        return caches.open(k).then(function(c){
+          return c.keys().then(function(reqs){
+            return Promise.all(reqs.filter(function(r){ return /script\.google|googleusercontent/.test(r.url); })
+                                   .map(function(r){ return c.delete(r); }));
+          });
+        });
+      }));
+    }).catch(function(){});
   }
 
   function cargar(){
@@ -2060,7 +2090,10 @@ img{max-width:100%}
     cargar();
   });
   var salir = $('salir');
-  if (salir) salir.addEventListener('click', function(ev){ ev.preventDefault(); borrarAcceso(); location.reload(); });
+  if (salir) salir.addEventListener('click', function(ev){
+    ev.preventDefault();
+    borrarAcceso().then(function(){ location.reload(); });
+  });
 
   cargar();
   setInterval(cargar, REFRESH_MS);
