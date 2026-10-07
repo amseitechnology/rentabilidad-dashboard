@@ -1,8 +1,8 @@
 /* Amsei — service worker.
    La cáscara de la app se sirve desde caché (abre al instante, incluso sin red).
    El dato del API va siempre a la red primero y cae a la última copia si no hay conexión. */
-var CACHE = 'amsei-v2';
-var CASCARA = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-512.png'];
+var CACHE = 'amsei-v3';
+var CASCARA = ['./', './index.html', './vendedor.html', './manifest.webmanifest', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(CASCARA); }).then(function(){ return self.skipWaiting(); }));

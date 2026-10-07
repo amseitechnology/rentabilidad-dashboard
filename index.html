@@ -389,6 +389,8 @@ img{max-width:100%}
 /* estados */
 .vacio{color:var(--lg-tenue);font-size:14.5px;margin:6px 0 0}
 .oculto{display:none !important}
+/* En Vendedores manda el panel del vendedor, que trae sus propios filtros */
+body.vista-vendedores #filtrosMeses, body.vista-vendedores #comparativaMes{display:none !important}
   .fila-falta{display:block;font-size:11px;color:var(--lg-tenue);margin-top:1px}
   .cobertura{font-size:12px;line-height:1.5;color:var(--lg-tinta-2);background:rgba(0,0,0,.03);
              border-radius:10px;padding:9px 12px;margin:0 0 14px}
@@ -632,26 +634,15 @@ img{max-width:100%}
 
     <!-- ==================== VISTA: VENDEDORES ==================== -->
     <div id="vistaVendedores" class="oculto">
-      <section class="lg-panel lg-panel--ancho">
-        <span class="lg-decorativo" aria-hidden="true">3</span>
-        <span class="lg-pildora">En construcción</span>
-        <h1 class="lg-h1">Métricas por <span class="lg-grad">vendedor.</span></h1>
-        <p class="lg-lede">Esta pestaña va a ser la pantalla de Franklin: sus propias cifras,
-        separadas del resto del panel.</p>
-
-        <div class="lg-claves">
-          <h4>Lo que falta definir</h4>
-          <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:7px">
-            <li style="font-size:15.5px;color:var(--lg-tinta-2)">Qué métricas quiere ver Franklin en su pantalla.</li>
-            <li style="font-size:15.5px;color:var(--lg-tinta-2)">Si cada vendedor ve solo lo suyo o el equipo completo.</li>
-            <li style="font-size:15.5px;color:var(--lg-tinta-2)">Cómo entra la comisión: sobre la ganancia bruta o sobre la neta.</li>
-          </ul>
-        </div>
-
-        <p class="lg-sub" style="margin:18px 0 0">Nota técnica: el endpoint todavía no manda el
-        vendedor de cada orden. El campo ya existe en la hoja; hay que agregarlo al API cuando
-        armemos esta vista.</p>
+      <!-- La pestaña muestra vendedor.html, la misma página que abre Franklin con su clave,
+           con los datos que ya trajo este panel (PAYLOAD.vendedores). -->
+      <section class="lg-panel lg-panel--ancho oculto" id="vendedorAviso">
+        <span class="lg-pildora">Sin datos de vendedor</span>
+        <p class="lg-lede" id="vendedorAvisoTexto" style="margin-top:10px"></p>
       </section>
+      <iframe id="vendedorFrame" class="oculto" title="Panel de Franklin" style="width:100%;height:900px;border:0;display:block;background:transparent"></iframe>
+      <p class="lg-sub" style="margin:14px 0 0;text-align:center">Franklin entra a esta misma pantalla con su clave en
+        <a href="vendedor.html" target="_blank" rel="noopener" style="color:var(--lg-azul)">vendedor.html</a>.</p>
     </div>
 
     <footer style="text-align:center;margin-top:34px;color:var(--lg-tenue);font-size:13px;line-height:1.8">
@@ -1839,7 +1830,31 @@ img{max-width:100%}
       pintarCierres();
     } else if (VISTA === 'clientes'){
       pintarVistaClientes();
+    } else if (VISTA === 'vendedores'){
+      pintarVendedores();
     }
+  }
+
+  // ---------- vendedores ----------
+  // vendedor.html vive en un iframe y lee window.AMSEI_VENDEDOR al abrir; si ya estaba abierto,
+  // se le pasan los datos nuevos con amseiVendedorDatos (misma página, mismo origen).
+  function pintarVendedores(){
+    var bloque = PAYLOAD && PAYLOAD.vendedores ? PAYLOAD.vendedores.Franklin : null;
+    var datos = bloque && bloque.ordenes ? bloque : null;
+    window.AMSEI_VENDEDOR = datos;
+    var fr = $('vendedorFrame');
+    if (!datos){
+      $('vendedorAvisoTexto').textContent = bloque && bloque.error
+        ? 'No se pudieron armar los datos de Franklin: ' + bloque.error
+        : 'El endpoint todavía no manda los datos de vendedores. Falta publicar la versión nueva en Apps Script: Implementar → Gestionar implementaciones → editar → Versión nueva.';
+      $('vendedorAviso').classList.remove('oculto');
+      fr.classList.add('oculto');
+      return;
+    }
+    $('vendedorAviso').classList.add('oculto');
+    fr.classList.remove('oculto');
+    if (!fr.getAttribute('src')) { fr.setAttribute('src', 'vendedor.html'); return; }
+    try { if (fr.contentWindow && fr.contentWindow.amseiVendedorDatos) fr.contentWindow.amseiVendedorDatos(datos); } catch(e){}
   }
 
   /** Segunda fila de filtros: los 12 meses del año.
@@ -1911,6 +1926,7 @@ img{max-width:100%}
     $('vistaClientes').classList.toggle('oculto', v !== 'clientes');
     $('vistaVendedores').classList.toggle('oculto', v !== 'vendedores');
     $('filtros').classList.toggle('oculto', v === 'vendedores');
+    document.body.classList.toggle('vista-vendedores', v === 'vendedores');
     pintarTodo();
   }
 
@@ -2033,6 +2049,12 @@ img{max-width:100%}
           borrarAcceso();
           document.body.classList.remove('is-cargando');
           mostrarCandado('Clave incorrecta. Revisala y probá de nuevo.');
+          return;
+        }
+        if (payload && payload.rol === 'vendedor'){
+          // Es la clave de un vendedor: su panel es vendedor.html, que ya la recibe guardada.
+          try { localStorage.setItem('amsei-vendedor-token', TOKEN); localStorage.removeItem('amsei-token'); } catch(e){}
+          location.replace('vendedor.html');
           return;
         }
         ocultarCandado();
