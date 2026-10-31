@@ -1595,6 +1595,22 @@ body.vista-vendedores #filtrosMeses, body.vista-vendedores #comparativaMes{displ
   }
 
   // ---------- render: órdenes pendientes ----------
+  // El motivo que arma el endpoint, con las filas exactas de la hoja cuando las manda.
+  function queTraba(o){
+    var det = o.detalle_sin_costo || [];
+    if (det.length){
+      var total = Number(o.lineas_sin_costo) || det.length;
+      return det.slice(0, 2).map(function(l){
+        return 'Fila ' + esc(l.fila) + (l.pestana ? ' de ' + esc(l.pestana) : '') + ': «' + esc(l.descripcion) + '» ' +
+               (Number(l.costo) < 0 ? 'con costo negativo' : 'sin costo');
+      }).join('<br>') + (total > 2 ? '<br>y ' + (total - 2) + ' líneas más sin costo' : '');
+    }
+    var m = String(o.motivo || '');
+    if (/sin lineas de producto/.test(m)) return 'No tiene ninguna línea de equipo o accesorio';
+    if (/fila Total/.test(m)) return 'La fila Total no tiene el costo de compra';
+    return esc(m || 'Falta el costo de compra');
+  }
+
   function pintarPendientes(){
     var box = $('avisoPendientes');
     var p = (PAYLOAD && PAYLOAD.ordenes_pendientes) || [];
@@ -1605,7 +1621,8 @@ body.vista-vendedores #filtrosMeses, body.vista-vendedores #comparativaMes{displ
       var fecha = d.length === 3 ? (d[2] + ' ' + (MESES[d[1]]||'')) : '—';
       var venta = Number(o.venta_total_hoja);
       return '<tr><td>' + esc(o.orden) + '</td><td>' + esc(o.cliente || '—') + '</td>' +
-             '<td>' + fecha + '</td><td class="lg-n">' + (venta ? fmtMoney(venta) : '—') + '</td></tr>';
+             '<td>' + fecha + '</td><td class="lg-n">' + (venta ? fmtMoney(venta) : '—') + '</td>' +
+             '<td style="font-size:13.5px;color:var(--lg-tinta-2)">' + queTraba(o) + '</td></tr>';
     }).join('');
     var extra = p.length > 6 ? '<p class="lg-sub" style="margin:12px 0 0">y ' + (p.length-6) + ' más.</p>' : '';
 
@@ -1617,7 +1634,7 @@ body.vista-vendedores #filtrosMeses, body.vista-vendedores #comparativaMes{displ
         ' No están sumadas en ningún número de este panel: sin el costo, la ganancia saldría inflada.' +
       '</p>' +
       '<div class="lg-tabla"><table><thead><tr><th>Orden</th><th>Cliente</th><th>Fecha</th>' +
-      '<th class="lg-n">Venta</th></tr></thead><tbody>' + filas + '</tbody></table></div>' + extra +
+      '<th class="lg-n">Venta</th><th>Qué la traba</th></tr></thead><tbody>' + filas + '</tbody></table></div>' + extra +
       // Lo que más confunde: cargar la factura y que el aviso siga. El panel no lee las
       // pestañas de ventas directo, lee lo que el script de la hoja reconstruye.
       '<p class="lg-sub" style="margin:14px 0 0;max-width:64ch">¿Ya la cargaste? El aviso se va cuando el script ' +
